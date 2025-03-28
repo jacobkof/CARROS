@@ -1,0 +1,3065 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LEFIOS CARS - Gestión de Flotilla</title> <!-- NAME CHANGED -->
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* === Estilos Globales === */
+    :root {
+      --primary-color: #0056b3; /* Darker Blue */
+      --primary-hover: #004494;
+      --secondary-color: #6c757d; /* Gray */
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --white-color: #ffffff;
+      --border-color: #dee2e6;
+      --background-color: #f1f3f5; /* Lighter gray background */
+      --text-color: #212529;
+      --text-muted: #6c757d;
+      --font-family-sans-serif: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --base-font-size: 14px;
+      --border-radius: 0.3rem;
+      --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      --box-shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family-sans-serif);
+      background-color: var(--background-color);
+      color: var(--text-color);
+      padding: 20px;
+      font-size: var(--base-font-size);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1600px; /* Wider for potentially more columns */
+      margin: 20px auto;
+      padding: 25px;
+      background-color: var(--white-color);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow-lg);
+    }
+
+    h1, h2, h3 {
+      color: var(--dark-color);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.2rem; }
+
+    /* === Botones === */
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.5rem 0.8rem;
+      font-size: var(--base-font-size);
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      text-decoration: none; /* For link buttons */
+      color: var(--white-color);
+      background-color: var(--primary-color);
+      vertical-align: middle; /* Ensure alignment */
+    }
+    button:hover, .btn:hover {
+      background-color: var(--primary-hover);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    button:disabled, .btn:disabled {
+      background-color: var(--secondary-color);
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .btn-secondary { background-color: var(--secondary-color); color: white; }
+    .btn-secondary:hover { background-color: #5a6268; }
+    .btn-success { background-color: var(--success-color); color: white; }
+    .btn-success:hover { background-color: #218838; }
+    .btn-danger { background-color: var(--danger-color); color: white; }
+    .btn-danger:hover { background-color: #c82333; }
+    .btn-warning { background-color: var(--warning-color); color: var(--dark-color); }
+    .btn-warning:hover { background-color: #e0a800; }
+    .btn-info { background-color: var(--info-color); color: white; }
+    .btn-info:hover { background-color: #138496; }
+    .btn-light { background-color: var(--light-color); color: var(--dark-color); border: 1px solid var(--border-color); }
+    .btn-light:hover { background-color: #e2e6ea; }
+    .btn-link { background: none; border: none; color: var(--primary-color); text-decoration: underline; padding: 0; }
+    .btn-link:hover { color: var(--primary-hover); }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8em;
+      gap: 0.3em;
+    }
+    .btn-icon {
+      padding: 0.4rem 0.6rem; /* Slightly smaller for icon-only */
+    }
+
+    /* === Secciones y Layout === */
+    .section {
+      background-color: var(--white-color);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      margin-bottom: 25px;
+    }
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .section-header h2 {
+        margin-bottom: 0;
+        text-align: left;
+    }
+
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .search-bar input[type="text"] {
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      min-width: 250px;
+    }
+
+    /* === Tabla Principal === */
+    .table-responsive {
+      overflow-x: auto;
+      width: 100%;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: var(--white-color);
+      margin-bottom: 20px;
+      font-size: 0.9em; /* Slightly smaller text in table */
+    }
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 0.6rem 0.7rem; /* More padding */
+      text-align: left;
+      vertical-align: middle; /* Align vertically */
+    }
+    th {
+      background-color: var(--light-color);
+      color: var(--dark-color);
+      font-weight: 600;
+      white-space: nowrap; /* Prevent header wrapping */
+    }
+    th[data-sort] { /* Only make sortable headers clickable */
+         cursor: pointer;
+    }
+    th .sort-icon {
+      margin-left: 5px;
+      color: var(--secondary-color);
+      opacity: 0.5;
+      transition: opacity 0.2s;
+      display: inline-block; /* Ensure it takes space */
+      width: 1em; /* Prevent layout shifts */
+    }
+    th[data-sort]:hover .sort-icon {
+      opacity: 1;
+    }
+    th .sort-icon.active {
+        opacity: 1;
+        color: var(--primary-color);
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    tr:hover {
+      background-color: #e9ecef; /* More noticeable hover */
+    }
+    td .btn { margin-right: 3px; margin-bottom: 3px;} /* Space between buttons in cells */
+
+    .vehicle-details-link {
+      color: var(--primary-color);
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .vehicle-details-link:hover {
+      text-decoration: underline;
+    }
+
+    /* === Badges de Estado/Alerta === */
+    .badge {
+      display: inline-block;
+      padding: 0.3em 0.6em;
+      font-size: 75%;
+      font-weight: 700;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: var(--border-radius);
+    }
+    .badge-warning { color: #212529; background-color: var(--warning-color); }
+    .badge-danger { color: var(--white-color); background-color: var(--danger-color); }
+    .badge-success { color: var(--white-color); background-color: var(--success-color); }
+    .badge-info { color: var(--white-color); background-color: var(--info-color); }
+    .badge-secondary { color: var(--white-color); background-color: var(--secondary-color); }
+
+    /* === Modales === */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none; /* Initially hidden */
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+      opacity: 0; /* Start invisible for transition */
+      transition: opacity 0.3s ease-in-out;
+    }
+    .modal-overlay.active {
+      /* display: flex; -- Handled by openModal JS */
+      opacity: 1;
+    }
+    .modal {
+      background: var(--white-color);
+      padding: 0; /* Padding will be in header/body/footer */
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 700px; /* Max width for larger modals */
+      max-height: 90vh;
+      overflow: hidden; /* Prevent content spilling */
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--box-shadow-lg);
+      transform: scale(0.95); /* Start slightly small */
+      transition: transform 0.3s ease-in-out;
+    }
+    .modal-overlay.active .modal {
+        transform: scale(1);
+    }
+    .modal-header {
+      padding: 1rem 1.5rem;
+      background-color: var(--light-color);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.4rem;
+      color: var(--primary-color);
+      text-align: left;
+    }
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto; /* Scrollable content */
+      flex-grow: 1;
+    }
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      background-color: var(--light-color);
+      border-top: 1px solid var(--border-color);
+      text-align: right;
+    }
+    .modal-footer button {
+        margin-left: 0.5rem;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--secondary-color);
+      cursor: pointer;
+      padding: 0 0.5rem;
+      line-height: 1;
+    }
+    .close-btn:hover {
+      color: var(--dark-color);
+    }
+
+    /* === Formularios === */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      font-size: 0.95em;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="date"],
+    .form-group input[type="file"],
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.5rem 0.7rem;
+      font-size: var(--base-font-size);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+      outline: none;
+    }
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .form-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    .form-group .form-text {
+      font-size: 0.85em;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    .input-group {
+        display: flex;
+        align-items: center;
+    }
+    .input-group input {
+        flex-grow: 1;
+    }
+    .input-group .btn {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+
+    /* === Tablas dentro de Modales === */
+    .sub-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+      font-size: 0.9em;
+    }
+    .sub-table th, .sub-table td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+      vertical-align: middle;
+    }
+    .sub-table th {
+      background-color: #f2f2f2;
+    }
+    .sub-table td button {
+        margin: 0; /* Reset margin for tiny buttons */
+    }
+
+    /* === Secciones Específicas === */
+    /* Removed unused #statesLinksSection / #licensesSection */
+    #statesContainer .state-block { /* Use #statesContainer for specificity */
+        margin-bottom: 15px;
+        padding: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background-color: #fdfdfd; /* Slightly off-white */
+    }
+     #statesContainer .state-header { /* Use #statesContainer for specificity */
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center; /* Align icon vertically */
+     }
+     /* Style for state name input */
+     #statesContainer .state-header input[type="text"] {
+         font-weight: bold;
+         border: none;
+         border-bottom: 1px dashed #ccc;
+         flex-grow: 1;
+         margin-right: 10px;
+         font-size: 1.1em;
+         padding: 2px 0; /* Minimal padding */
+     }
+     #statesContainer .state-header input[type="text"]:focus {
+         outline: none;
+         border-bottom: 1px solid var(--primary-color);
+     }
+
+     #statesContainer .link-list { /* Target the UL specifically */
+        list-style: none;
+        padding: 0;
+        margin-top: 10px;
+     }
+     #statesContainer .link-item { /* Use #statesContainer for specificity */
+        display: flex;
+        gap: 8px; /* Increased gap */
+        align-items: center; /* Align inputs and buttons */
+        padding: 8px 0; /* Add padding for separation */
+        border-bottom: 1px dashed var(--border-color); /* Add separator */
+     }
+     #statesContainer .link-list li:last-child { /* Target last link item */
+        border-bottom: none; /* Remove border from last item */
+     }
+     #statesContainer .link-item input { /* Use #statesContainer for specificity */
+         padding: 4px 6px; /* Slightly more padding */
+         font-size: 0.9em;
+         flex: 1 1 auto; /* Allow input to grow/shrink */
+         min-width: 100px; /* Minimum width */
+         border: 1px solid var(--border-color); /* Ensure border */
+         border-radius: var(--border-radius);
+     }
+     #statesContainer .link-item .btn { /* Use #statesContainer for specificity */
+         flex-shrink: 0; /* Prevent buttons from shrinking */
+     }
+
+     #licensesTable td, #licensesTable th {
+         vertical-align: middle;
+     }
+     #licensesTableBody input[type="text"] { /* Style input inside license table */
+        padding: 4px 6px; /* Consistent padding */
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        width: 100%; /* Make input fill cell */
+        box-sizing: border-box; /* Include padding in width */
+     }
+
+
+    /* === Notificaciones === */
+    #notificationArea {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        min-width: 250px;
+        max-width: 400px; /* Optional max width */
+    }
+    .toast {
+        background-color: rgba(52, 58, 64, 0.9); /* Dark background */
+        color: var(--white-color);
+        padding: 10px 15px;
+        border-radius: var(--border-radius);
+        margin-bottom: 10px;
+        box-shadow: var(--box-shadow-lg);
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        transform: translateX(100%); /* Start off screen */
+        pointer-events: none; /* Prevent interaction while hidden/fading */
+    }
+    .toast.show {
+        opacity: 1;
+        transform: translateX(0); /* Slide in */
+        pointer-events: auto; /* Allow interaction when shown */
+    }
+    .toast.success { background-color: rgba(40, 167, 69, 0.9); }
+    .toast.error { background-color: rgba(220, 53, 69, 0.9); }
+    .toast.info { background-color: rgba(23, 162, 184, 0.9); } /* Added info style */
+    .toast.warning { background-color: rgba(255, 193, 7, 0.9); color: #212529;} /* Added warning style */
+
+
+    /* === Helper Classes === */
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .d-flex { display: flex; }
+    .justify-content-between { justify-content: space-between; }
+    .align-items-center { align-items: center; }
+    .mb-0 { margin-bottom: 0 !important; }
+    .mt-1 { margin-top: 0.5rem !important; }
+    .mb-1 { margin-bottom: 0.5rem !important; }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        body { padding: 10px; }
+        .container { padding: 15px; margin: 10px auto; }
+        .action-bar { flex-direction: column; align-items: stretch; }
+        .search-bar { justify-content: stretch; width: 100%; }
+        .search-bar input[type="text"] { min-width: 0; width: 100%; margin-bottom: 5px; }
+        .modal { max-width: 95%; }
+        th, td { padding: 0.4rem 0.5rem; font-size: 0.85em; } /* Reduce padding & font on small screens */
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.3rem; }
+        .btn { padding: 0.4rem 0.7rem; font-size: 0.9em;} /* Adjust button size */
+        .btn-sm { padding: 0.2rem 0.4rem; font-size: 0.75em; }
+        .btn-icon { padding: 0.3rem 0.5rem; }
+        .modal-body { padding: 1rem; }
+        .modal-header, .modal-footer { padding: 0.8rem 1rem; }
+        /* Adjust state/link modal inputs on small screens */
+        #statesContainer .link-item { flex-direction: column; align-items: stretch; }
+        #statesContainer .link-item input { min-width: 100%; }
+        #statesContainer .link-item .btn { margin-top: 5px; width: auto; } /* Align buttons */
+        #statesContainer .link-item a.btn { align-self: flex-start;}
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1><i class="fas fa-car"></i> LEFIOS CARS - Gestión de Flotilla</h1> <!-- NAME CHANGED -->
+
+    <!-- Notification Area -->
+    <div id="notificationArea"></div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div>
+            <!-- Corrected onclick function names -->
+            <button class="btn btn-info" onclick="showProximosTramitesModal()">
+                <i class="fas fa-calendar-alt"></i> Próximos Trámites
+            </button>
+            <button class="btn btn-secondary" onclick="openStatesLinksModal()">
+                <i class="fas fa-map-marked-alt"></i> Estados y Ligas
+            </button>
+            <button class="btn btn-secondary" onclick="openLicensesModal()">
+                <i class="fas fa-id-card"></i> Licencias Conductores
+            </button>
+             <button class="btn btn-success" onclick="saveAll()">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Buscar Marca/Modelo o Placas..." oninput="filterVehicles()" />
+            <button class="btn btn-light btn-icon" onclick="clearSearch()" title="Limpiar búsqueda">
+                <i class="fas fa-times"></i>
+            </button>
+            <button class="btn btn-primary" onclick="openAddVehicleModal()">
+                <i class="fas fa-plus"></i> Agregar Vehículo
+            </button>
+        </div>
+    </div>
+
+    <!-- Vehicle Table Section -->
+    <div class="section">
+       <div class="section-header">
+           <h2><i class="fas fa-list-ul"></i> Listado de Vehículos</h2>
+       </div>
+       <div class="table-responsive">
+            <table id="vehicleTable">
+                <thead>
+                <tr>
+                    <!-- Corrected HTML Comments -->
+                    <th data-sort="marcaModelo">Marca/Modelo <span class="sort-icon fas fa-sort"></span></th>
+                    <th data-sort="placas">Placas <span class="sort-icon fas fa-sort"></span></th>
+                    <th data-sort="proximoMantenimiento">Próx. Manto. <span class="sort-icon fas fa-sort"></span></th>
+                    <th>Próx. Verif.</th> <!-- Sorting verification is complex due to calculation -->
+                    <th data-sort="cambioPlacas">Cambio Placas <span class="sort-icon fas fa-sort"></span></th>
+                    <th data-sort="vencimientoSeguro">Venc. Seguro <span class="sort-icon fas fa-sort"></span></th>
+                    <th data-sort="refrendoAnioPagado">Refrendo <span class="sort-icon fas fa-sort"></span></th>
+                    <th>Docs</th>
+                    <th>Historial</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="vehicleTableBody">
+                <!-- Rows will be generated by JavaScript -->
+                </tbody>
+            </table>
+       </div>
+    </div>
+
+  </div> <!-- End Container -->
+
+  <!-- === MODALES === -->
+
+  <!-- MODAL: AGREGAR / EDITAR VEHÍCULO -->
+  <div class="modal-overlay" id="vehicleModalOverlay">
+    <div class="modal" id="vehicleModal">
+      <div class="modal-header">
+        <h2 id="vehicleModalTitle">Agregar Vehículo</h2>
+        <button class="close-btn" onclick="closeModal('vehicleModalOverlay')" title="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editVehicleIndex"> <!-- Hidden field for edit index -->
+        <div class="row" style="display: flex; gap: 15px; flex-wrap: wrap;">
+          <div style="flex: 1 1 48%; min-width: 250px;">
+              <div class="form-group">
+                <label for="vehicleMarcaModelo">Marca/Modelo (Obligatorio):</label>
+                <input type="text" id="vehicleMarcaModelo" required />
+              </div>
+              <div class="form-group">
+                <label for="vehicleModelo">Modelo (Específico):</label>
+                <input type="text" id="vehicleModelo" placeholder="Ej: Spark, Sentra" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleAnio">Año:</label>
+                <input type="number" id="vehicleAnio" placeholder="Ej: 2023" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleColor">Color:</label>
+                <input type="text" id="vehicleColor" />
+              </div>
+              <div class="form-group">
+                <label for="vehiclePlacas">Placas (máx 10, Obligatorio):</label>
+                <input type="text" id="vehiclePlacas" maxlength="10" required />
+              </div>
+              <div class="form-group">
+                <label for="vehicleNumSerie">Número de Serie:</label>
+                <input type="text" id="vehicleNumSerie" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleFechaAdq">Fecha de Adquisición:</label>
+                <input type="date" id="vehicleFechaAdq" />
+              </div>
+               <div class="form-group">
+                <label for="vehicleKilometraje">Kilometraje Actual:</label>
+                <input type="text" id="vehicleKilometraje" placeholder="Ej: 150000" />
+                 <small class="form-text">Solo número si es posible, o '150,000 km'.</small>
+              </div>
+          </div>
+          <div style="flex: 1 1 48%; min-width: 250px;">
+              <div class="form-group">
+                <label for="vehicleMantenimiento">Próximo Mantenimiento (Fecha):</label>
+                <input type="date" id="vehicleMantenimiento" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleCambioPlacas">Próximo Cambio Placas (Fecha):</label>
+                <input type="date" id="vehicleCambioPlacas" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleVencSeguro">Vencimiento Seguro (Fecha):</label>
+                <input type="date" id="vehicleVencSeguro" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleAseguradora">Aseguradora:</label>
+                <input type="text" id="vehicleAseguradora" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleTelefono">Teléfono Contacto Seguro:</label>
+                <input type="text" id="vehicleTelefono" placeholder="Ej: 55-1234-5678" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleRefrendoAnio">Año Último Refrendo Pagado:</label>
+                <input type="number" id="vehicleRefrendoAnio" placeholder="Ej: 2024" min="1900" max="2100" />
+              </div>
+               <div class="form-group">
+                <label for="vehicleObservaciones">Observaciones Generales:</label>
+                <textarea id="vehicleObservaciones" rows="3"></textarea>
+              </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('vehicleModalOverlay')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveVehicle()">
+            <i class="fas fa-save"></i> Guardar Vehículo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FALLAS -->
+  <div class="modal-overlay" id="faultsModalOverlay">
+      <div class="modal">
+        <div class="modal-header">
+            <h2 id="faultsModalTitle">Fallas del Vehículo</h2>
+            <button class="close-btn" onclick="closeModal('faultsModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="faultsVehicleInfo" class="mb-1"><strong>Vehículo:</strong> <span id="faultsVehicleName"></span></p>
+
+            <div class="section-header" style="border: none; padding: 0; margin-bottom: 10px;">
+                <h3>Registrar Nueva Falla</h3>
+            </div>
+             <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+                  <label for="newFaultDate">Fecha:</label>
+                  <input type="date" id="newFaultDate" />
+                </div>
+                <div class="form-group" style="flex: 3 1 300px; margin-bottom: 0;">
+                  <label for="newFaultDesc">Descripción (Obligatorio):</label>
+                  <textarea id="newFaultDesc" rows="1" placeholder="Ej: Chirrido al frenar" required></textarea>
+                </div>
+                <div style="margin-bottom: 0;"> <!-- Adjusted alignment -->
+                     <button class="btn btn-success btn-sm" onclick="addFault()">
+                         <i class="fas fa-plus"></i> Agregar
+                     </button>
+                </div>
+             </div>
+
+             <div class="section-header" style="border: none; padding: 0; margin-bottom: 10px; margin-top: 20px;">
+                <h3>Historial de Fallas</h3>
+             </div>
+             <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table class="sub-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Descripción</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="faultsTableBody"></tbody>
+                </table>
+             </div>
+        </div>
+        <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('faultsModalOverlay')">Cerrar</button>
+             <button class="btn btn-info" onclick="printFaults()">
+                 <i class="fas fa-print"></i> Imprimir Fallas
+             </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: MANTENIMIENTOS -->
+    <div class="modal-overlay" id="maintenanceModalOverlay">
+      <div class="modal">
+        <div class="modal-header">
+            <h2 id="maintenanceModalTitle">Historial de Mantenimientos</h2>
+            <button class="close-btn" onclick="closeModal('maintenanceModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="maintenanceVehicleInfo" class="mb-1"><strong>Vehículo:</strong> <span id="maintenanceVehicleName"></span></p>
+
+             <div class="section-header" style="border: none; padding: 0; margin-bottom: 10px;">
+                <h3>Registrar Nuevo Mantenimiento</h3>
+            </div>
+             <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+                    <label for="newMaintenanceDate">Fecha (Obligatorio):</label>
+                    <input type="date" id="newMaintenanceDate" required/>
+                </div>
+                 <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+                    <label for="newMaintenanceKm">Kilometraje (Obligatorio):</label>
+                    <input type="text" id="newMaintenanceKm" placeholder="Ej: 152000" required/>
+                 </div>
+                 <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+                    <label for="newMaintenanceNextChange">Próximo (Opcional):</label>
+                    <input type="date" id="newMaintenanceNextChange" />
+                 </div>
+                 <div style="margin-bottom: 0;"> <!-- Adjusted alignment -->
+                     <button class="btn btn-success btn-sm" onclick="addMaintenance()">
+                         <i class="fas fa-plus"></i> Agregar
+                     </button>
+                 </div>
+             </div>
+
+             <div class="section-header" style="border: none; padding: 0; margin-bottom: 10px; margin-top: 20px;">
+                <h3>Historial Registrado</h3>
+             </div>
+             <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table class="sub-table">
+                    <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Kilometraje</th>
+                        <th>Próximo Cambio</th>
+                        <th>Acción</th>
+                    </tr>
+                    </thead>
+                    <tbody id="maintenanceTableBody"></tbody>
+                </table>
+             </div>
+        </div>
+        <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('maintenanceModalOverlay')">Cerrar</button>
+             <button class="btn btn-info" onclick="printMaintenance()">
+                 <i class="fas fa-print"></i> Imprimir Mantenimientos
+             </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: DOCUMENTOS VEHÍCULO (PÓLIZA, TARJETA) -->
+    <div class="modal-overlay" id="vehicleDocModalOverlay">
+      <div class="modal" id="vehicleDocModal" style="max-width: 550px;">
+        <div class="modal-header">
+            <h2 id="vehicleDocModalTitle">Documento</h2>
+            <button class="close-btn" onclick="closeModal('vehicleDocModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="vehicleDocInfo" class="mb-1"><strong>Vehículo:</strong> <span id="vehicleDocName"></span></p>
+            <hr class="mb-1">
+            <div id="vehicleDocActions" class="mb-1">
+                <!-- View/Download button will be added here -->
+            </div>
+            <div class="form-group">
+                <label for="vehicleDocFileInput">Subir Nuevo/Reemplazar (PDF/JPG/PNG):</label>
+                <input type="file" id="vehicleDocFileInput" accept=".pdf,.png,.jpg,.jpeg" />
+            </div>
+        </div>
+         <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('vehicleDocModalOverlay')">Cerrar</button>
+             <button class="btn btn-primary" onclick="uploadVehicleDoc()">
+                 <i class="fas fa-upload"></i> Subir/Actualizar
+             </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PRÓXIMOS TRÁMITES -->
+    <div class="modal-overlay" id="tramitesModalOverlay">
+      <div class="modal" id="tramitesModal">
+        <div class="modal-header">
+            <h2><i class="fas fa-calendar-check"></i> Próximos Trámites (Siguientes 30 días)</h2>
+            <button class="close-btn" onclick="closeModal('tramitesModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="tramitesContent" style="max-height: 60vh; overflow-y: auto;">
+                <!-- Content generated by JS -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('tramitesModalOverlay')">Cerrar</button>
+            <button class="btn btn-info" onclick="printTramites()">
+                <i class="fas fa-print"></i> Imprimir Lista
+            </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ESTADOS Y LIGAS -->
+    <div class="modal-overlay" id="statesLinksModalOverlay">
+      <div class="modal" id="statesLinksModal" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2><i class="fas fa-map-marked-alt"></i> Administrar Estados y Ligas de Trámites</h2>
+            <button class="close-btn" onclick="closeModal('statesLinksModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Administra los estados y las URLs útiles para trámites (verificación, refrendos, etc.).</p>
+            <button class="btn btn-success btn-sm mb-1" onclick="addState()">
+                <i class="fas fa-plus"></i> Agregar Estado
+            </button>
+            <div id="statesContainer" style="max-height: 50vh; overflow-y: auto;">
+                <!-- States and links generated by JS -->
+            </div>
+        </div>
+         <div class="modal-footer">
+             <!-- Removed save button as changes save instantly -->
+            <button class="btn btn-primary" onclick="closeModal('statesLinksModalOverlay')">
+                 <i class="fas fa-check"></i> Hecho
+            </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: LICENCIAS DE CONDUCTORES -->
+    <div class="modal-overlay" id="licensesModalOverlay">
+      <div class="modal" id="licensesModal" style="max-width: 700px;"> <!-- Increased width slightly -->
+        <div class="modal-header">
+            <h2><i class="fas fa-id-card"></i> Licencias de Conducir</h2>
+            <button class="close-btn" onclick="closeModal('licensesModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+             <p>Administra los conductores y sus licencias (no asociadas a un vehículo específico).</p>
+            <button class="btn btn-success btn-sm mb-1" onclick="addPerson()">
+                <i class="fas fa-user-plus"></i> Agregar Conductor
+            </button>
+             <div class="table-responsive" style="max-height: 50vh; overflow-y: auto;">
+                <table class="sub-table" id="licensesTable">
+                    <thead>
+                    <tr>
+                        <th>Nombre Conductor</th>
+                        <th class="text-center">Licencia</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody id="licensesTableBody">
+                        <!-- Driver rows generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+             <!-- Removed save button as changes save instantly -->
+            <button class="btn btn-primary" onclick="closeModal('licensesModalOverlay')">
+                 <i class="fas fa-check"></i> Hecho
+            </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: DOCUMENTO LICENCIA -->
+    <div class="modal-overlay" id="licenseDocModalOverlay">
+      <div class="modal" id="licenseDocModal" style="max-width: 550px;">
+        <div class="modal-header">
+            <h2 id="licenseDocModalTitle">Licencia de Conducir</h2>
+            <button class="close-btn" onclick="closeModal('licenseDocModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="licenseDocInfo" class="mb-1"><strong>Conductor:</strong> <span id="licenseDocName"></span></p>
+            <hr class="mb-1">
+            <div id="licenseDocActions" class="mb-1">
+                <!-- View/Download button will be added here -->
+            </div>
+            <div class="form-group">
+                <label for="licenseDocFileInput">Subir Nuevo/Reemplazar (PDF/JPG/PNG):</label>
+                <input type="file" id="licenseDocFileInput" accept=".pdf,.png,.jpg,.jpeg" />
+            </div>
+        </div>
+         <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('licenseDocModalOverlay')">Cerrar</button>
+             <button class="btn btn-primary" onclick="uploadLicenseDoc()">
+                 <i class="fas fa-upload"></i> Subir/Actualizar Licencia
+             </button>
+        </div>
+      </div>
+    </div>
+
+  <script>
+    /* ========================================================================== */
+    /*  1. DATA STRUCTURES & INITIALIZATION                                     */
+    /* ========================================================================== */
+    const initialVehicles = [
+      {
+        id: 1700000000001, // Example unique ID
+        marcaModelo: "Chevy Spark",
+        modelo: "Spark LT",
+        color: "Rojo",
+        placas: "ABC-123A",
+        año: 2010,
+        numeroSerie: "ABC123SERIE01",
+        fechaAdquisicion: "2010-03-01",
+        kilometraje: "150000", // Store as string/number, normalize later
+        proximoMantenimiento: "2025-06-01",
+        cambioPlacas: "2025-03-01",
+        vencimientoSeguro: "2024-07-15", // Example date near expiry
+        observaciones: "Revisar frenos en el siguiente servicio",
+        aseguradora: "AXA",
+        telefono: "55-1234-5678",
+        refrendoAnioPagado: 2024, // Store the year paid
+        fallas: [ { id: 1700000001001, fechaFalla: '2024-05-10', descripcion: 'Ruido extraño al arrancar' } ],
+        mantenimientos: [ { id: 1700000002001, fechaManto: '2024-01-15', kilometraje: '145000', proximoCambio: '2024-07-15'} ],
+        polizaBase64: "",
+        tarjetaCirculacionBase64: ""
+      },
+      {
+        id: 1700000000002, // Example unique ID
+        marcaModelo: "Nissan Versa",
+        modelo: "Advance",
+        color: "Gris Oxford",
+        placas: "XYZ-789B",
+        año: 2019,
+        numeroSerie: "XYZ987SERIE02",
+        fechaAdquisicion: "2019-08-20",
+        kilometraje: "65000",
+        proximoMantenimiento: "2024-08-01", // Example near date
+        cambioPlacas: null, // Example no date
+        vencimientoSeguro: "2025-01-10",
+        observaciones: "",
+        aseguradora: "Qualitas",
+        telefono: "55-9876-5432",
+        refrendoAnioPagado: 2024,
+        fallas: [],
+        mantenimientos: [ { id: 1700000002002, fechaManto: '2024-02-01', kilometraje: '60000', proximoCambio: '2024-08-01'} ],
+        polizaBase64: "",
+        tarjetaCirculacionBase64: ""
+      }
+    ];
+
+    let initialStates = [
+      {
+        id: 1700000003001, stateName: "CDMX",
+        links: [ { id: 1700000004001, label: "Verificación", url: "http://citasverificentros.cdmx.gob.mx" } ]
+      },
+      {
+        id: 1700000003002, stateName: "Edomex",
+        links: [
+          { id: 1700000004002, label: "Verificación", url: "https://sram.edomex.gob.mx/verificacion_vehicular" },
+          { id: 1700000004003, label: "Refrendos", url: "https://sfpya.edomexico.gob.mx/recaudacion/" }
+        ]
+      }
+    ];
+
+    let initialLicenses = [
+      { id: 1700000005001, personName: "Jacobo", licenseBase64: "" },
+      { id: 1700000005002, personName: "Alejandra", licenseBase64: "" },
+      { id: 1700000005003, personName: "Fernanda", licenseBase64: "" }
+    ];
+
+    // --- Load from LocalStorage or use Initial Data ---
+    let vehicles = [];
+    let statesData = [];
+    let peopleLicenses = [];
+    const STORAGE_KEYS = {
+        vehicles: "lefiocars_vehicles_v1", // Added version suffix
+        states: "lefiocars_statesData_v1",
+        licenses: "lefiocars_peopleLicenses_v1"
+    };
+
+
+    // Wrap localStorage access in try-catch for potential security errors or invalid JSON
+    try {
+        const storedVehicles = localStorage.getItem(STORAGE_KEYS.vehicles);
+        vehicles = storedVehicles ? JSON.parse(storedVehicles) : JSON.parse(JSON.stringify(initialVehicles)); // Deep copy initial if none stored
+    } catch (e) {
+        console.error("Error loading vehicles from localStorage:", e);
+        vehicles = JSON.parse(JSON.stringify(initialVehicles)); // Fallback to deep copy of initial data
+        showToast("Error al cargar vehículos guardados. Usando datos iniciales.", "error");
+    }
+     try {
+        const storedStates = localStorage.getItem(STORAGE_KEYS.states);
+        statesData = storedStates ? JSON.parse(storedStates) : JSON.parse(JSON.stringify(initialStates));
+    } catch (e) {
+        console.error("Error loading statesData from localStorage:", e);
+        statesData = JSON.parse(JSON.stringify(initialStates));
+        showToast("Error al cargar estados guardados. Usando datos iniciales.", "error");
+    }
+    try {
+        const storedLicenses = localStorage.getItem(STORAGE_KEYS.licenses);
+        peopleLicenses = storedLicenses ? JSON.parse(storedLicenses) : JSON.parse(JSON.stringify(initialLicenses));
+    } catch (e) {
+        console.error("Error loading peopleLicenses from localStorage:", e);
+        peopleLicenses = JSON.parse(JSON.stringify(initialLicenses));
+        showToast("Error al cargar licencias guardadas. Usando datos iniciales.", "error");
+    }
+
+
+    // Global state for modal contexts
+    let currentVehicleIndex = null; // Index in the vehicles array for modals
+    let currentPersonIndex = null; // Index in the peopleLicenses array
+    let currentSortColumn = null;
+    let currentSortDirection = 'asc';
+    let currentDocField = null; // 'polizaBase64' or 'tarjetaCirculacionBase64'
+
+
+    function saveToLocalStorage() {
+      try {
+          localStorage.setItem(STORAGE_KEYS.vehicles, JSON.stringify(vehicles));
+          localStorage.setItem(STORAGE_KEYS.states, JSON.stringify(statesData));
+          localStorage.setItem(STORAGE_KEYS.licenses, JSON.stringify(peopleLicenses));
+          // console.log("Data saved to localStorage."); // Optional: for debugging
+      } catch (e) {
+          console.error("Error saving to localStorage:", e);
+          // Check for QuotaExceededError specifically
+          if (e.name === 'QuotaExceededError') {
+                showToast("Error: Almacenamiento lleno. No se pudieron guardar los cambios.", "error");
+          } else {
+                showToast("Error al guardar datos en almacenamiento local.", "error");
+          }
+      }
+    }
+
+    /* ========================================================================== */
+    /*  2. UTILITIES & HELPERS                                                    */
+    /* ========================================================================== */
+
+    // Simple Toast Notification
+    function showToast(message, type = 'info') { // type: info, success, error, warning
+        const notificationArea = document.getElementById('notificationArea');
+        if (!notificationArea) {
+            console.warn("Notification area not found for toast:", message);
+            return; // Avoid error if element doesn't exist
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        notificationArea.appendChild(toast);
+
+        // Trigger reflow AFTER appending to enable transition
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                 toast.classList.add('show');
+            });
+        });
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            // Remove element after transition ends
+            toast.addEventListener('transitionend', () => {
+                 // Check if the toast is still a child before removing
+                 if (toast.parentNode === notificationArea) {
+                    notificationArea.removeChild(toast);
+                 }
+            }, { once: true }); // Ensure listener is removed after firing
+        }, 3500); // Display for 3.5 seconds
+    }
+
+    // Date comparison helper
+    function isWithinDays(dateString, days = 30) {
+      if (!dateString) return { isNear: false, daysDiff: Infinity, status: 'nodate' };
+      try {
+        // Create a date object treating the string as local date
+        // Add time part to avoid potential timezone shifts affecting the date part
+        const targetDate = new Date(dateString + 'T00:00:00');
+
+        // Check if the date is valid
+        if (isNaN(targetDate.getTime())) {
+             console.warn("Invalid date string:", dateString);
+             return { isNear: false, daysDiff: Infinity, status: 'invalid' };
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today's date to the beginning of the day
+
+        // Calculate difference in milliseconds, then convert to days
+        const diffTime = targetDate - today;
+        // Use Math.ceil to ensure any fraction of a day counts
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+            return { isNear: true, daysDiff: diffDays, status: 'overdue' }; // Overdue
+        } else if (diffDays <= days) {
+            return { isNear: true, daysDiff: diffDays, status: 'due' }; // Due soon (includes today if diffDays is 0)
+        } else {
+            return { isNear: false, daysDiff: diffDays, status: 'future' }; // Not due soon
+        }
+      } catch (e) {
+          console.error("Error parsing date:", dateString, e);
+          return { isNear: false, daysDiff: Infinity, status: 'error' }; // Error during parsing
+      }
+    }
+
+
+    // Verification Calendar Logic (Simplified - Assumes semi-annual)
+    const verificationCalendar = [
+        { terminaciones: [5, 6], periodo1: "Ene-Feb", periodo2: "Jul-Ago", month1: 1, month2: 7 }, // Month is 1-based
+        { terminaciones: [7, 8], periodo1: "Feb-Mar", periodo2: "Ago-Sep", month1: 2, month2: 8 },
+        { terminaciones: [3, 4], periodo1: "Mar-Abr", periodo2: "Sep-Oct", month1: 3, month2: 9 },
+        { terminaciones: [1, 2], periodo1: "Abr-May", periodo2: "Oct-Nov", month1: 4, month2: 10 },
+        { terminaciones: [9, 0], periodo1: "May-Jun", periodo2: "Nov-Dic", month1: 5, month2: 11 }
+    ];
+
+    function getLastNumericDigit(placa) {
+      if (!placa) return null;
+      // Match the last digit in the string, even if followed by non-digits (e.g., 'ABC123A') -> 3
+      const match = placa.match(/\d(?=\D*$)|(\d$)/); // Last digit followed by non-digit OR last char is digit
+      return match ? parseInt(match[0], 10) : null;
+    }
+
+    function getNextVerificationInfo(placas) {
+      const lastDigit = getLastNumericDigit(placas);
+      if (lastDigit === null) return { text: "N/A", status: 'nodate', daysDiff: Infinity, isNear: false };
+
+      const calendarEntry = verificationCalendar.find(item => item.terminaciones.includes(lastDigit));
+      if (!calendarEntry) return { text: "Inválido", status: 'nodate', daysDiff: Infinity, isNear: false }; // Digit not in calendar?
+
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth() + 1; // 1-12
+      const currentDay = today.getDate(); // Day of month
+
+      let nextVerifMonth, nextVerifYear, periodText;
+
+      // Determine which semester's period end date is next or currently active
+      // Calculate end date of first period
+      let endPeriod1Month = calendarEntry.month1 + 1; // End month is the second month of the period
+      let endPeriod1Year = currentYear;
+      const endPeriod1Date = new Date(endPeriod1Year, endPeriod1Month, 0); // Last day of end month
+
+      // Calculate end date of second period
+      let endPeriod2Month = calendarEntry.month2 + 1;
+      let endPeriod2Year = currentYear;
+      if (endPeriod2Month > 12) { // Handle Nov-Dec wrap-around
+          endPeriod2Month = 1;
+          endPeriod2Year += 1;
+      }
+      const endPeriod2Date = new Date(endPeriod2Year, endPeriod2Month, 0);
+
+
+      let targetEndDate;
+      if (today <= endPeriod1Date) {
+          // We are before or within the first period
+          targetEndDate = endPeriod1Date;
+          periodText = calendarEntry.periodo1;
+          nextVerifYear = endPeriod1Year;
+      } else if (today <= endPeriod2Date) {
+          // We are after the first period but before or within the second period
+          targetEndDate = endPeriod2Date;
+          periodText = calendarEntry.periodo2;
+          nextVerifYear = endPeriod2Year;
+      } else {
+           // We are past the second period for this year, next is the first period of next year
+           let nextEndPeriod1Month = calendarEntry.month1 + 1;
+           let nextEndPeriod1Year = currentYear + 1;
+           targetEndDate = new Date(nextEndPeriod1Year, nextEndPeriod1Month, 0);
+           periodText = calendarEntry.periodo1;
+           nextVerifYear = nextEndPeriod1Year;
+      }
+
+
+      if (isNaN(targetEndDate.getTime())) {
+          console.error("Failed to create verification target end date:", nextVerifYear, periodText);
+          return { text: "Error Fecha", status: 'error', daysDiff: Infinity, isNear: false };
+      }
+
+      // Check if the calculated END date is within 30 days or overdue
+      const { isNear, daysDiff, status } = isWithinDays(targetEndDate.toISOString().split('T')[0], 30);
+
+       let text = `${periodText} ${nextVerifYear}`;
+       // Return info based on END date proximity
+       return { text: text, status: status, daysDiff: daysDiff, isNear: isNear };
+    }
+
+    // Debounce function for search input
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    /* ========================================================================== */
+    /*  3. RENDERING & TABLE DISPLAY                                              */
+    /* ========================================================================== */
+
+    function renderTable() {
+        const tableBody = document.getElementById("vehicleTableBody");
+        if (!tableBody) {
+             console.error("Table body #vehicleTableBody not found!");
+             return;
+        }
+        tableBody.innerHTML = ""; // Clear existing rows
+
+        const searchInput = document.getElementById("searchInput");
+        const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+        let filteredVehicles = vehicles;
+        if (searchTerm) {
+            try {
+                filteredVehicles = vehicles.filter(v =>
+                    (v.marcaModelo?.toLowerCase() || "").includes(searchTerm) ||
+                    (v.placas?.toLowerCase() || "").includes(searchTerm)
+                );
+            } catch (e) {
+                 console.error("Error during filtering:", e);
+                 showToast("Error al aplicar el filtro de búsqueda.", "error");
+                 filteredVehicles = vehicles; // Fallback to showing all
+            }
+        }
+
+        // Apply Sorting
+        if (currentSortColumn) {
+            // Create a copy before sorting to avoid modifying the original order for index stability
+            // Although we primarily use index from render loop, this is safer if IDs aren't used everywhere
+             let vehiclesToSort = [...filteredVehicles];
+            vehiclesToSort.sort((a, b) => {
+                let valA = a[currentSortColumn];
+                let valB = b[currentSortColumn];
+
+                // Handle null/undefined/empty strings consistently for sorting
+                // Treat null/undefined/empty as "lowest" value if ascending
+                const isEmptyA = valA === null || valA === undefined || valA === "";
+                const isEmptyB = valB === null || valB === undefined || valB === "";
+
+                if (isEmptyA && isEmptyB) return 0;
+                if (isEmptyA) return currentSortDirection === 'asc' ? -1 : 1;
+                if (isEmptyB) return currentSortDirection === 'asc' ? 1 : -1;
+
+                // Attempt Date comparison first
+                let dateA = !isNaN(Date.parse(valA)) ? new Date(valA + 'T00:00:00') : null;
+                let dateB = !isNaN(Date.parse(valB)) ? new Date(valB + 'T00:00:00') : null;
+
+                // Check if BOTH are valid dates before comparing as dates
+                 if (dateA && !isNaN(dateA.getTime()) && dateB && !isNaN(dateB.getTime())) {
+                     if (dateA < dateB) return currentSortDirection === 'asc' ? -1 : 1;
+                     if (dateA > dateB) return currentSortDirection === 'asc' ? 1 : -1;
+                     return 0;
+                 }
+
+                 // Attempt Numeric comparison if values look like numbers
+                 const numA = parseFloat(valA);
+                 const numB = parseFloat(valB);
+                  // Check if BOTH are valid numbers (and weren't dates)
+                 if (!isNaN(numA) && !isNaN(numB) && !(dateA && dateB)) { // Avoid comparing dates as numbers
+                      if (numA < numB) return currentSortDirection === 'asc' ? -1 : 1;
+                      if (numA > numB) return currentSortDirection === 'asc' ? 1 : -1;
+                      return 0;
+                 }
+
+
+                 // Fallback to Locale-aware string comparison (case-insensitive)
+                valA = String(valA);
+                valB = String(valB);
+                 // Using localeCompare for better handling of special characters/accents
+                const comparison = valA.localeCompare(valB, undefined, { sensitivity: 'base' }); // 'base' ignores case and accents
+
+                return currentSortDirection === 'asc' ? comparison : -comparison;
+            });
+            filteredVehicles = vehiclesToSort; // Use the sorted array
+        }
+
+
+        if (filteredVehicles.length === 0) {
+            const colCount = document.querySelectorAll('#vehicleTable thead th').length || 10; // Fallback column count
+            tableBody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted">No se encontraron vehículos ${searchTerm ? 'que coincidan con la búsqueda' : ''}.</td></tr>`;
+            return;
+        }
+
+        // Use filteredVehicles for rendering, but find originalIndex from the main 'vehicles' array for actions
+        filteredVehicles.forEach((veh) => {
+            // Find the original index in the main `vehicles` array using the ID. This is CRUCIAL.
+            const originalIndex = vehicles.findIndex(v => v.id === veh.id);
+            if (originalIndex === -1) {
+                 console.error(`Vehicle with ID ${veh.id} (${veh.marcaModelo}) not found in original 'vehicles' array during render. Skipping.`);
+                 // Removed toast here to avoid flooding user if data is corrupt
+                 return; // Skip rendering this inconsistent entry
+            }
+
+            const row = document.createElement("tr");
+            row.setAttribute('data-id', veh.id); // Store ID on the row for potential future use
+
+            // --- Deadline Checks ---
+            const mantInfo = isWithinDays(veh.proximoMantenimiento);
+            const placasInfo = isWithinDays(veh.cambioPlacas);
+            const seguroInfo = isWithinDays(veh.vencimientoSeguro);
+            const verifInfo = getNextVerificationInfo(veh.placas);
+
+            // --- Create Badges ---
+            const createBadge = (info, baseText) => {
+                // Use a default like 'N/A' if baseText is null/undefined/empty
+                const dateStr = baseText || 'N/A';
+                // If no relevant info (not near, no date, invalid, error), just return the text
+                if (!info || info.status === 'nodate' || info.status === 'invalid' || info.status === 'error') return dateStr;
+
+                let badgeClass = '';
+                let icon = '';
+                let text = dateStr; // Start with the date string or 'N/A'
+
+                 // Add days remaining/overdue information clearly
+                 if(info.daysDiff !== Infinity && info.daysDiff !== null) {
+                    if (info.daysDiff > 0) {
+                        text += ` (en ${info.daysDiff} día${info.daysDiff !== 1 ? 's' : ''})`;
+                    } else if (info.daysDiff === 0) {
+                        text += ' (Hoy)';
+                    } else { // daysDiff < 0
+                        text += ` (${Math.abs(info.daysDiff)} día${Math.abs(info.daysDiff) !== 1 ? 's' : ''} atrasado)`;
+                    }
+                 }
+
+                 // Assign badge style based on status
+                if (info.status === 'overdue') {
+                    badgeClass = 'badge-danger';
+                    icon = '<i class="fas fa-exclamation-circle"></i> ';
+                } else if (info.status === 'due') {
+                    badgeClass = 'badge-warning';
+                     icon = '<i class="fas fa-clock"></i> ';
+                } else if (info.status === 'future') {
+                   // Only return text for future items, no special badge color
+                   return text;
+                } else {
+                    // For any other unhandled status, just return the text
+                    return text;
+                }
+
+                 // Construct and return the badge HTML
+                 return `<span class="badge ${badgeClass}">${icon}${text}</span>`;
+            };
+
+            const mantBadge = createBadge(mantInfo, veh.proximoMantenimiento);
+            const placasBadge = createBadge(placasInfo, veh.cambioPlacas);
+            const seguroBadge = createBadge(seguroInfo, veh.vencimientoSeguro);
+
+            // Verification Badge specific handling
+             let verifBadgeHTML = verifInfo.text || 'N/A';
+             if (verifInfo.isNear && verifInfo.status !== 'future') { // Only badge if near or overdue
+                 let verifBadgeClass = (verifInfo.status === 'overdue') ? 'badge-danger' : 'badge-warning';
+                 let verifIcon = (verifInfo.status === 'overdue') ? '<i class="fas fa-exclamation-circle"></i> ' : '<i class="fas fa-clock"></i> ';
+                 verifBadgeHTML = `<span class="badge ${verifBadgeClass}">${verifIcon}${verifInfo.text}</span>`;
+             }
+
+            // --- Document Status ---
+            const polizaIcon = veh.polizaBase64 ? '<i class="fas fa-file-pdf text-success" title="Póliza cargada"></i>' : '<i class="fas fa-file-alt text-muted" title="Sin Póliza"></i>';
+            const tarjetaIcon = veh.tarjetaCirculacionBase64 ? '<i class="fas fa-id-card text-success" title="Tarjeta cargada"></i>' : '<i class="fas fa-id-card text-muted" title="Sin Tarjeta"></i>';
+
+
+            row.innerHTML = `
+                <td>
+                    <a href="#" class="vehicle-details-link" onclick="openEditVehicleModal(${originalIndex})">${veh.marcaModelo || 'Sin nombre'}</a>
+                    <div style="font-size: 0.85em; color: var(--text-muted);">${veh.color || ''} ${veh.año ? `(${veh.año})` : ''}</div>
+                </td>
+                <td>${veh.placas || 'N/A'}</td>
+                <td>${mantBadge}</td>
+                <td>${verifBadgeHTML}</td>
+                <td>${placasBadge}</td>
+                <td>${seguroBadge}</td>
+                <td class="text-center">${veh.refrendoAnioPagado ? `<span class="badge badge-success">${veh.refrendoAnioPagado}</span>` : '<span class="badge badge-secondary">N/P</span>'}</td>
+                <td class="text-center">
+                    <button class="btn btn-light btn-sm btn-icon" onclick="openVehicleDocModal(${originalIndex}, 'polizaBase64', 'Póliza de Seguro')" title="Póliza">${polizaIcon}</button>
+                    <button class="btn btn-light btn-sm btn-icon" onclick="openVehicleDocModal(${originalIndex}, 'tarjetaCirculacionBase64', 'Tarjeta de Circulación')" title="Tarjeta Circ.">${tarjetaIcon}</button>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-secondary btn-sm" onclick="openFaultsModal(${originalIndex})" title="Historial de Fallas (${veh.fallas?.length || 0})">
+                        <i class="fas fa-wrench"></i> Fallas (${veh.fallas?.length || 0})
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openMaintenanceModal(${originalIndex})" title="Historial de Mantenimiento (${veh.mantenimientos?.length || 0})">
+                        <i class="fas fa-tools"></i> Manto. (${veh.mantenimientos?.length || 0})
+                    </button>
+                 </td>
+                <td>
+                    <button class="btn btn-primary btn-sm btn-icon" onclick="openEditVehicleModal(${originalIndex})" title="Editar Vehículo">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-info btn-sm btn-icon" onclick="printVehicleSummary(${originalIndex})" title="Imprimir Resumen">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-icon" onclick="deleteVehicle(${originalIndex})" title="Eliminar Vehículo">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        updateSortIcons();
+    }
+
+    // Debounced version of renderTable for search input
+    const debouncedRenderTable = debounce(renderTable, 300);
+
+    function filterVehicles() {
+        // No need to reset sort when filtering. Let user control sort separately.
+        debouncedRenderTable();
+    }
+
+     function clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = '';
+        filterVehicles(); // Re-render without filter
+    }
+
+    // Sorting Logic
+    function handleSort(event) {
+        // Ensure the click is directly on the TH or within its content, not on interactive elements inside potentially
+        const header = event.target.closest('th');
+        // Ensure header exists and has a data-sort attribute
+        if (!header || !header.dataset.sort) return;
+
+        const sortKey = header.dataset.sort;
+
+        if (currentSortColumn === sortKey) {
+            // Toggle direction
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            // Sort new column
+            currentSortColumn = sortKey;
+            currentSortDirection = 'asc';
+        }
+        renderTable(); // Re-render with sorting applied
+    }
+
+    function updateSortIcons() {
+        // Select headers within the THEAD of the specific table
+        const tableHeaders = document.querySelectorAll('#vehicleTable thead th');
+        if (!tableHeaders) return;
+
+        tableHeaders.forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (!icon) return; // Skip if no icon span found
+
+            // Reset classes first
+            icon.className = 'sort-icon fas fa-sort'; // Default icon
+            icon.classList.remove('active');
+
+            // Apply active class and specific icon if this is the sorted column
+            if (th.dataset.sort === currentSortColumn) {
+                icon.classList.remove('fa-sort'); // Remove default if active
+                icon.classList.add(currentSortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down', 'active');
+            } else if (!th.dataset.sort) {
+                 // If header is not sortable, ensure no sort icon is shown (optional)
+                 icon.classList.remove('fa-sort', 'fa-sort-up', 'fa-sort-down');
+            }
+        });
+    }
+
+
+    /* ========================================================================== */
+    /*  4. MODAL MANAGEMENT (Generic Open/Close)                                */
+    /* ========================================================================== */
+
+    function openModal(modalId) {
+        const modalOverlay = document.getElementById(modalId);
+        if (modalOverlay) {
+            modalOverlay.style.display = 'flex'; // Change display before adding class for transition
+            // Use timeout to allow display change before opacity/transform transition
+            setTimeout(() => {
+                 modalOverlay.classList.add('active');
+                 // Focus first focusable element in modal body for accessibility
+                const focusable = modalOverlay.querySelector('.modal-body input:not([type=hidden]), .modal-body button, .modal-body textarea, .modal-body select');
+                 if(focusable) {
+                    // Timeout needed to allow CSS transition to complete before focusing
+                    setTimeout(() => {
+                        try { focusable.focus(); } catch(e){ /* Ignore focus errors */ }
+                     }, 310); // Slightly longer than transition
+                 }
+            }, 10); // Small delay
+        } else {
+            console.error("Modal overlay not found:", modalId);
+        }
+    }
+
+    function closeModal(modalId) {
+        const modalOverlay = document.getElementById(modalId);
+        if (modalOverlay) {
+            modalOverlay.classList.remove('active');
+            // Wait for transition to finish before setting display none
+             modalOverlay.addEventListener('transitionend', function handleTransitionEnd() {
+                modalOverlay.style.display = 'none';
+                modalOverlay.removeEventListener('transitionend', handleTransitionEnd); // Clean up listener
+             }, { once: true });
+
+             // Fallback timeout in case transitionend doesn't fire (e.g., if transition is interrupted)
+             setTimeout(() => {
+                if (!modalOverlay.classList.contains('active')) { // Only hide if still meant to be hidden
+                    modalOverlay.style.display = 'none';
+                }
+             }, 350); // Should be >= transition duration
+
+        } else {
+             console.error("Modal overlay not found for closing:", modalId);
+        }
+
+        // Reset potentially conflicting global indices when specific modals close
+        if (modalId === 'vehicleModalOverlay' || modalId === 'faultsModalOverlay' || modalId === 'maintenanceModalOverlay' || modalId === 'vehicleDocModalOverlay') {
+            currentVehicleIndex = null;
+            currentDocField = null; // Reset doc field too
+            // console.log("Reset currentVehicleIndex & currentDocField"); // Debugging
+        }
+        if (modalId === 'licensesModalOverlay' || modalId === 'licenseDocModalOverlay') {
+             currentPersonIndex = null;
+             // console.log("Reset currentPersonIndex"); // Debugging
+        }
+         if (modalId === 'vehicleModalOverlay') {
+             clearVehicleForm(); // Also clear form on close
+        }
+    }
+
+     // Close modal on Escape key press
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            // Find the topmost active modal overlay
+            const activeModals = document.querySelectorAll('.modal-overlay.active');
+             if (activeModals.length > 0) {
+                 // Get the last one in the NodeList, which should be the topmost visually
+                 const topModal = activeModals[activeModals.length - 1];
+                 closeModal(topModal.id);
+             }
+        }
+    });
+
+    // Close modal clicking overlay background
+     document.addEventListener('click', (event) => {
+        // Check if the direct click target is the overlay itself
+        if (event.target.classList.contains('modal-overlay')) {
+             closeModal(event.target.id);
+        }
+    });
+
+
+    /* ========================================================================== */
+    /*  5. VEHICLE MANAGEMENT (CRUD)                                              */
+    /* ========================================================================== */
+
+    function clearVehicleForm() {
+        const indexInput = document.getElementById('editVehicleIndex');
+        if(indexInput) indexInput.value = ""; // Clear hidden index
+
+        const modal = document.getElementById('vehicleModal');
+        if (!modal) return;
+        // Select all relevant input/textarea/select elements within the modal body and reset them
+        modal.querySelectorAll('.modal-body input[type="text"], .modal-body input[type="number"], .modal-body input[type="date"], .modal-body textarea, .modal-body select')
+             .forEach(el => el.value = '');
+        // Explicitly handle number inputs that might default to '0' if needed (setting to '' usually works)
+        const yearInput = document.getElementById('vehicleAnio');
+        if (yearInput) yearInput.value = '';
+        const refrendoInput = document.getElementById('vehicleRefrendoAnio');
+        if (refrendoInput) refrendoInput.value = '';
+        // console.log("Vehicle form cleared."); // Debugging
+    }
+
+
+    function openAddVehicleModal() {
+        currentVehicleIndex = null; // Explicitly set null for add mode
+        clearVehicleForm();
+        const titleEl = document.getElementById('vehicleModalTitle');
+        if (titleEl) titleEl.textContent = "Agregar Nuevo Vehículo";
+        openModal('vehicleModalOverlay');
+    }
+
+    function openEditVehicleModal(index) {
+         // Validate index against the main 'vehicles' array
+        if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            console.error("Invalid index for openEditVehicleModal:", index);
+            showToast("Error: No se pudo encontrar el vehículo para editar.", "error");
+            return;
+        }
+        currentVehicleIndex = index; // Store the correct index from the main array
+        const veh = vehicles[index];
+
+        clearVehicleForm(); // Clear first to ensure clean slate
+        const indexInput = document.getElementById('editVehicleIndex');
+        if (indexInput) indexInput.value = index; // Store the index being edited
+
+        // Populate form fields - use empty string as fallback for null/undefined/empty
+        const fields = {
+            'vehicleMarcaModelo': veh.marcaModelo, 'vehicleModelo': veh.modelo,
+            'vehicleAnio': veh.año, 'vehicleColor': veh.color,
+            'vehiclePlacas': veh.placas, 'vehicleNumSerie': veh.numeroSerie,
+            'vehicleFechaAdq': veh.fechaAdquisicion, 'vehicleKilometraje': veh.kilometraje,
+            'vehicleMantenimiento': veh.proximoMantenimiento, 'vehicleCambioPlacas': veh.cambioPlacas,
+            'vehicleVencSeguro': veh.vencimientoSeguro, 'vehicleAseguradora': veh.aseguradora,
+            'vehicleTelefono': veh.telefono, 'vehicleRefrendoAnio': veh.refrendoAnioPagado,
+            'vehicleObservaciones': veh.observaciones
+        };
+
+        for (const id in fields) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = fields[id] || ''; // Set value or empty string
+            } else {
+                console.warn(`Element with ID ${id} not found in vehicle modal form.`);
+            }
+        }
+
+        const titleEl = document.getElementById('vehicleModalTitle');
+        if(titleEl) titleEl.textContent = `Editar Vehículo: ${veh.marcaModelo || 'Sin Nombre'}`;
+        openModal('vehicleModalOverlay');
+    }
+
+    function saveVehicle() {
+        const marcaModeloInput = document.getElementById('vehicleMarcaModelo');
+        const placasInput = document.getElementById('vehiclePlacas');
+        const marcaModelo = marcaModeloInput ? marcaModeloInput.value.trim() : '';
+        const placas = placasInput ? placasInput.value.trim() : '';
+        const editIndexStr = document.getElementById('editVehicleIndex')?.value;
+        const isEditing = editIndexStr !== undefined && editIndexStr !== "";
+        const editIndex = isEditing ? parseInt(editIndexStr) : null;
+
+        // Validation
+        if (!marcaModelo) {
+            showToast("El campo Marca/Modelo es obligatorio.", "warning");
+            if (marcaModeloInput) marcaModeloInput.focus();
+            return;
+        }
+        if (!placas) {
+            showToast("El campo Placas es obligatorio.", "warning");
+            if (placasInput) placasInput.focus();
+            return;
+        }
+
+        // Validate editIndex when editing
+         if (isEditing && (editIndex === null || isNaN(editIndex) || editIndex < 0 || editIndex >= vehicles.length || !vehicles[editIndex])) {
+            showToast("Error al identificar el vehículo para editar. Intenta cerrar y reabrir.", "error");
+            console.error("Invalid editIndex during save:", editIndex);
+            return;
+        }
+
+        // Helper to get value or null
+        const getValueOrNull = (id) => document.getElementById(id)?.value || null;
+        const getTrimmedValue = (id) => document.getElementById(id)?.value.trim() || '';
+        const getIntValueOrNull = (id) => parseInt(document.getElementById(id)?.value) || null;
+
+
+        // Prepare vehicle data object
+        const vehicleData = {
+            // Keep existing ID if editing, generate new timestamp ID if adding
+            id: isEditing ? vehicles[editIndex].id : Date.now(),
+            marcaModelo: marcaModelo,
+            modelo: getTrimmedValue('vehicleModelo'),
+            año: getIntValueOrNull('vehicleAnio'),
+            color: getTrimmedValue('vehicleColor'),
+            placas: placas,
+            numeroSerie: getTrimmedValue('vehicleNumSerie'),
+            fechaAdquisicion: getValueOrNull('vehicleFechaAdq'),
+            kilometraje: getTrimmedValue('vehicleKilometraje'), // Keep as string
+            proximoMantenimiento: getValueOrNull('vehicleMantenimiento'),
+            cambioPlacas: getValueOrNull('vehicleCambioPlacas'),
+            vencimientoSeguro: getValueOrNull('vehicleVencSeguro'),
+            aseguradora: getTrimmedValue('vehicleAseguradora'),
+            telefono: getTrimmedValue('vehicleTelefono'),
+            refrendoAnioPagado: getIntValueOrNull('vehicleRefrendoAnio'),
+            observaciones: getTrimmedValue('vehicleObservaciones'),
+            // CRITICAL: Preserve existing arrays/docs if editing, initialize if adding
+            fallas: isEditing && vehicles[editIndex].fallas ? vehicles[editIndex].fallas : [],
+            mantenimientos: isEditing && vehicles[editIndex].mantenimientos ? vehicles[editIndex].mantenimientos : [],
+            polizaBase64: isEditing && vehicles[editIndex].polizaBase64 ? vehicles[editIndex].polizaBase64 : "",
+            tarjetaCirculacionBase64: isEditing && vehicles[editIndex].tarjetaCirculacionBase64 ? vehicles[editIndex].tarjetaCirculacionBase64 : "",
+        };
+
+
+        if (isEditing) {
+            // Update existing vehicle in the main array
+            vehicles[editIndex] = vehicleData;
+            showToast("Vehículo actualizado correctamente.", "success");
+        } else {
+            // Add new vehicle to the main array
+            vehicles.push(vehicleData);
+            showToast("Vehículo agregado correctamente.", "success");
+        }
+
+        saveToLocalStorage(); // Save changes
+        renderTable(); // Update the main table display
+        closeModal('vehicleModalOverlay'); // Close the modal
+        // clearVehicleForm(); // Form is cleared by closeModal now
+    }
+
+     function deleteVehicle(index) {
+        // Validate index against the main 'vehicles' array
+       if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            console.error("Invalid index for deleteVehicle:", index);
+            showToast("Error: No se pudo encontrar el vehículo para eliminar.", "error");
+            return;
+       }
+      const veh = vehicles[index];
+      // Use template literal for cleaner message formatting
+      if (confirm(`¿Estás seguro de eliminar el vehículo "${veh.marcaModelo || 'Sin Nombre'} (${veh.placas || 'N/A'})"?\n\nEsta acción no se puede deshacer.`)) {
+        const deletedName = veh.marcaModelo || 'Vehículo'; // For the confirmation message
+        vehicles.splice(index, 1); // Remove from the main array
+        saveToLocalStorage();
+        showToast(`Vehículo "${deletedName}" eliminado.`, "info");
+        renderTable(); // Re-render the table to reflect the deletion
+      }
+    }
+
+    /* ========================================================================== */
+    /*  6. FAULTS MANAGEMENT                                                      */
+    /* ========================================================================== */
+
+    function openFaultsModal(index) {
+        if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+             console.error("Invalid index for openFaultsModal:", index);
+             showToast("Error al abrir historial de fallas.", "error"); return;
+        }
+      currentVehicleIndex = index;
+      const vehicle = vehicles[index];
+
+      // Safely access properties
+      const vehicleName = vehicle.marcaModelo || 'Vehículo sin nombre';
+      const vehiclePlacas = vehicle.placas || 'N/A';
+
+      const nameEl = document.getElementById("faultsVehicleName");
+      const titleEl = document.getElementById('faultsModalTitle');
+      if (nameEl) nameEl.textContent = `${vehicleName} (${vehiclePlacas})`;
+      if (titleEl) titleEl.textContent = `Fallas de ${vehicleName}`;
+
+
+      // Ensure fallas array exists before rendering
+       if (!Array.isArray(vehicle.fallas)) {
+          vehicle.fallas = [];
+          console.warn(`Initialized missing 'fallas' array for vehicle index ${index}`);
+       }
+
+      renderFaultsTable(vehicle);
+      // Clear input fields
+      const faultDateInput = document.getElementById("newFaultDate");
+      const faultDescInput = document.getElementById("newFaultDesc");
+      if (faultDateInput) faultDateInput.value = "";
+      if (faultDescInput) faultDescInput.value = "";
+
+      openModal('faultsModalOverlay');
+    }
+
+    function renderFaultsTable(veh) {
+      const tb = document.getElementById("faultsTableBody");
+      if (!tb) {
+          console.error("Faults table body not found!");
+          return;
+      }
+      tb.innerHTML = ""; // Clear previous content
+
+      // Ensure 'fallas' exists and is an array (double check)
+      const fallasArray = Array.isArray(veh.fallas) ? veh.fallas : [];
+
+      if (fallasArray.length === 0) {
+          tb.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay fallas registradas.</td></tr>';
+          return;
+      }
+
+      // Sort by date descending (most recent first), handling potentially missing/invalid dates
+      const sortedFallas = [...fallasArray].sort((a, b) => {
+           const dateA = a?.fechaFalla || '0000-00-00'; // Treat missing/null date as earliest
+           const dateB = b?.fechaFalla || '0000-00-00';
+           // localeCompare is robust for YYYY-MM-DD format
+           return dateB.localeCompare(dateA); // Descending order
+      });
+
+      sortedFallas.forEach((falla) => {
+        // Basic check for valid falla object and id
+        if (!falla || typeof falla !== 'object' || falla.id === undefined || falla.id === null) {
+            console.warn("Skipping invalid falla entry:", falla);
+            return; // Skip invalid entries
+        }
+
+        const tr = document.createElement("tr");
+        const faultId = falla.id; // Use existing ID
+
+        tr.innerHTML = `
+          <td>${falla.fechaFalla || "N/A"}</td>
+          <td>${falla.descripcion || "Sin descripción"}</td>
+          <td><button class="btn btn-danger btn-sm btn-icon" onclick="removeFault('${faultId}')" title="Eliminar Falla"><i class="fas fa-trash-alt"></i></button></td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+
+    function addFault() {
+      if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+           showToast("Error: No se ha seleccionado un vehículo válido.", "error"); return;
+      }
+
+      const dateInput = document.getElementById("newFaultDate");
+      const descInput = document.getElementById("newFaultDesc");
+      const fecha = dateInput ? dateInput.value : null;
+      const desc = descInput ? descInput.value.trim() : "";
+
+      if (!desc) {
+        showToast("La descripción de la falla es obligatoria.", "warning");
+        if (descInput) descInput.focus();
+        return;
+      }
+
+      // Ensure fallas array exists on the selected vehicle
+      if (!Array.isArray(vehicles[currentVehicleIndex].fallas)) {
+          vehicles[currentVehicleIndex].fallas = [];
+      }
+
+      vehicles[currentVehicleIndex].fallas.push({
+        id: Date.now(), // Use timestamp as simple unique ID for new fault
+        fechaFalla: fecha || null, // Store null if date is empty
+        descripcion: desc
+      });
+      saveToLocalStorage();
+      renderFaultsTable(vehicles[currentVehicleIndex]); // Re-render the sub-table
+      renderTable(); // Re-render main table to update fault count in button (if needed)
+
+      // Clear inputs after adding
+      if (dateInput) dateInput.value = "";
+      if (descInput) descInput.value = "";
+      showToast("Falla agregada correctamente.", "success");
+    }
+
+    function removeFault(faultId) {
+       if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+           showToast("Error: No se ha seleccionado un vehículo válido para eliminar falla.", "error"); return;
+       }
+       const vehicle = vehicles[currentVehicleIndex];
+       if (!Array.isArray(vehicle.fallas)) {
+           showToast("Error: No se encontró el historial de fallas.", "error"); return;
+       }
+
+       const fallasArray = vehicle.fallas;
+       // Find index using ID (ensure comparison types match, e.g., string vs number)
+       // Assuming IDs are numbers (from Date.now()):
+       const faultIdNum = Number(faultId);
+       const faultIndex = fallasArray.findIndex(f => f.id === faultIdNum);
+
+       if (faultIndex !== -1) {
+           fallasArray.splice(faultIndex, 1);
+           saveToLocalStorage();
+           renderFaultsTable(vehicle); // Update the modal table
+           renderTable(); // Re-render main table to update fault count (if needed)
+           showToast("Falla eliminada correctamente.", "info");
+       } else {
+           console.warn("Fault ID not found for removal:", faultId);
+           showToast("Error: No se encontró la falla especificada para eliminar.", "error");
+       }
+    }
+
+    function printFaults() {
+      if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+           showToast("Selecciona un vehículo primero.", "error"); return;
+      }
+      const veh = vehicles[currentVehicleIndex];
+      const fallasArray = Array.isArray(veh.fallas) ? veh.fallas : [];
+
+      let content = `
+        <h2>Historial de Fallas</h2>
+        <p><strong>Vehículo:</strong> ${veh.marcaModelo || 'N/A'} (Placas: ${veh.placas || 'N/A'})</p>
+        <hr>
+      `;
+      if (fallasArray.length === 0) {
+        content += "<p>No hay fallas registradas.</p>";
+      } else {
+        content += `
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr style="background:#f2f2f2;">
+              <th style="border:1px solid #ccc; padding:6px;">Fecha</th>
+              <th style="border:1px solid #ccc; padding:6px;">Descripción</th>
+            </tr></thead><tbody>
+        `;
+        // Sort by date for printing (ascending)
+         [...fallasArray].sort((a, b) => {
+              const dateA = a?.fechaFalla || '9999-12-31'; // Treat missing date as latest for ascending sort
+              const dateB = b?.fechaFalla || '9999-12-31';
+              return dateA.localeCompare(dateB); // Ascending
+         }).forEach(f => {
+          content += `
+            <tr>
+              <td style="border:1px solid #ccc; padding:6px; vertical-align: top;">${f.fechaFalla || "N/A"}</td>
+              <td style="border:1px solid #ccc; padding:6px;">${f.descripcion || ""}</td>
+            </tr>`;
+        });
+        content += "</tbody></table>";
+      }
+      openPrintWindow(content, `Fallas - ${veh.marcaModelo || 'Vehículo'}`);
+    }
+
+    /* ========================================================================== */
+    /*  7. MAINTENANCE MANAGEMENT                                                 */
+    /* ========================================================================== */
+
+    function openMaintenanceModal(index) {
+      if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            console.error("Invalid index for openMaintenanceModal:", index);
+            showToast("Error al abrir historial de mantenimiento.", "error"); return;
+      }
+      currentVehicleIndex = index;
+      const veh = vehicles[index];
+      const vehicleName = veh.marcaModelo || 'Vehículo sin nombre';
+      const vehiclePlacas = veh.placas || 'N/A';
+
+      const nameEl = document.getElementById("maintenanceVehicleName");
+      const titleEl = document.getElementById('maintenanceModalTitle');
+      if (nameEl) nameEl.textContent = `${vehicleName} (${vehiclePlacas})`;
+      if (titleEl) titleEl.textContent = `Mantenimientos de ${vehicleName}`;
+
+
+      // Ensure mantenimientos array exists
+      if (!Array.isArray(veh.mantenimientos)) {
+          veh.mantenimientos = [];
+           console.warn(`Initialized missing 'mantenimientos' array for vehicle index ${index}`);
+      }
+
+      renderMaintenanceTable(veh);
+
+      // Clear inputs
+      const dateInput = document.getElementById("newMaintenanceDate");
+      const kmInput = document.getElementById("newMaintenanceKm");
+      const nextChangeInput = document.getElementById("newMaintenanceNextChange");
+      if (dateInput) dateInput.value = "";
+      if (kmInput) kmInput.value = "";
+      if (nextChangeInput) nextChangeInput.value = "";
+
+      openModal('maintenanceModalOverlay');
+    }
+
+    function renderMaintenanceTable(veh) {
+      const tb = document.getElementById("maintenanceTableBody");
+       if (!tb) {
+            console.error("Maintenance table body not found!");
+            return;
+       }
+       tb.innerHTML = "";
+
+      const mantosArray = Array.isArray(veh.mantenimientos) ? veh.mantenimientos : [];
+
+       if (mantosArray.length === 0) {
+          tb.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay mantenimientos registrados.</td></tr>';
+          return;
+      }
+      // Sort by date descending (most recent first)
+      const sortedMantos = [...mantosArray].sort((a, b) => {
+          const dateA = a?.fechaManto || '0000-00-00';
+          const dateB = b?.fechaManto || '0000-00-00';
+          return dateB.localeCompare(dateA);
+      });
+
+      sortedMantos.forEach((manto) => {
+         // Basic check for valid maintenance object and id
+         if (!manto || typeof manto !== 'object' || manto.id === undefined || manto.id === null) {
+             console.warn("Skipping invalid maintenance entry:", manto);
+             return; // Skip invalid entries
+         }
+
+        const tr = document.createElement("tr");
+        const mantoId = manto.id; // Use existing ID
+
+        tr.innerHTML = `
+          <td>${manto.fechaManto || "N/A"}</td>
+          <td>${manto.kilometraje || "N/A"}</td>
+          <td>${manto.proximoCambio || "N/A"}</td>
+          <td><button class="btn btn-danger btn-sm btn-icon" onclick="removeMaintenance('${mantoId}')" title="Eliminar Mantenimiento"><i class="fas fa-trash-alt"></i></button></td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+
+    function addMaintenance() {
+      if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+          showToast("Error: No se ha seleccionado un vehículo válido.", "error"); return;
+      }
+
+      const dateInput = document.getElementById("newMaintenanceDate");
+      const kmInput = document.getElementById("newMaintenanceKm");
+      const nextChangeInput = document.getElementById("newMaintenanceNextChange");
+
+      const fecha = dateInput ? dateInput.value : null;
+      const km = kmInput ? kmInput.value.trim() : "";
+      const nextChange = nextChangeInput ? nextChangeInput.value : null;
+
+      if (!fecha) {
+        showToast("La fecha de mantenimiento es obligatoria.", "warning");
+         if (dateInput) dateInput.focus();
+        return;
+      }
+      if (!km) {
+        showToast("El kilometraje es obligatorio.", "warning");
+         if (kmInput) kmInput.focus();
+        return;
+      }
+
+      // Ensure mantenimientos array exists
+      if (!Array.isArray(vehicles[currentVehicleIndex].mantenimientos)) {
+          vehicles[currentVehicleIndex].mantenimientos = [];
+      }
+
+      vehicles[currentVehicleIndex].mantenimientos.push({
+        id: Date.now(),
+        fechaManto: fecha,
+        kilometraje: km,
+        proximoCambio: nextChange || null // Store null if empty date
+      });
+      saveToLocalStorage();
+      renderMaintenanceTable(vehicles[currentVehicleIndex]); // Update modal table
+      renderTable(); // Update main table count/button (if needed)
+
+      // Clear inputs
+      if (dateInput) dateInput.value = "";
+      if (kmInput) kmInput.value = "";
+      if (nextChangeInput) nextChangeInput.value = "";
+       showToast("Mantenimiento agregado correctamente.", "success");
+    }
+
+    function removeMaintenance(mantoId) {
+        if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+          showToast("Error: No se ha seleccionado un vehículo válido para eliminar mantenimiento.", "error"); return;
+        }
+        const vehicle = vehicles[currentVehicleIndex];
+       if (!Array.isArray(vehicle.mantenimientos)) {
+          showToast("Error: No se encontró el historial de mantenimientos.", "error"); return;
+       }
+
+       const mantosArray = vehicle.mantenimientos;
+       // Find index using ID (convert ID types if necessary)
+       const maintIdNum = Number(mantoId);
+       const maintIndex = mantosArray.findIndex(m => m.id === maintIdNum);
+
+        if (maintIndex !== -1) {
+            mantosArray.splice(maintIndex, 1);
+            saveToLocalStorage();
+            renderMaintenanceTable(vehicle); // Update modal table
+            renderTable(); // Update main table count (if needed)
+            showToast("Mantenimiento eliminado correctamente.", "info");
+        } else {
+             console.warn("Maintenance ID not found for removal:", mantoId);
+             showToast("Error: No se encontró el mantenimiento especificado para eliminar.", "error");
+        }
+    }
+
+    function printMaintenance() {
+      if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+            showToast("Selecciona un vehículo primero.", "error"); return;
+       }
+      const veh = vehicles[currentVehicleIndex];
+      const mantosArray = Array.isArray(veh.mantenimientos) ? veh.mantenimientos : [];
+      let content = `
+        <h2>Historial de Mantenimientos</h2>
+        <p><strong>Vehículo:</strong> ${veh.marcaModelo || 'N/A'} (Placas: ${veh.placas || 'N/A'})</p>
+        <hr>
+      `;
+       if (mantosArray.length === 0) {
+        content += "<p>No hay mantenimientos registrados.</p>";
+      } else {
+        content += `
+          <table style="width:100%;border-collapse:collapse;"><thead>
+            <tr style="background:#f2f2f2;">
+              <th style="border:1px solid #ccc;padding:6px;">Fecha</th>
+              <th style="border:1px solid #ccc;padding:6px;">Kilometraje</th>
+              <th style="border:1px solid #ccc;padding:6px;">Próximo Cambio</th>
+            </tr></thead><tbody>
+        `;
+         // Sort by date for printing (ascending)
+        [...mantosArray].sort((a, b) => {
+             const dateA = a?.fechaManto || '9999-12-31';
+             const dateB = b?.fechaManto || '9999-12-31';
+             return dateA.localeCompare(dateB);
+        }).forEach(m => {
+          content += `
+            <tr>
+              <td style="border:1px solid #ccc;padding:6px; vertical-align: top;">${m.fechaManto || "N/A"}</td>
+              <td style="border:1px solid #ccc;padding:6px; vertical-align: top;">${m.kilometraje || "N/A"}</td>
+              <td style="border:1px solid #ccc;padding:6px; vertical-align: top;">${m.proximoCambio || "N/A"}</td>
+            </tr>`;
+        });
+        content += "</tbody></table>";
+      }
+      openPrintWindow(content, `Mantenimientos - ${veh.marcaModelo || 'Vehículo'}`);
+    }
+
+    /* ========================================================================== */
+    /*  8. DOCUMENT MANAGEMENT (Vehicle & License)                              */
+    /* ========================================================================== */
+
+    function getFileExtension(filename) {
+        if (!filename || typeof filename !== 'string') return '';
+        return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+    }
+    function getMimeType(base64Data) {
+        // Improved regex to handle potential spaces or variations
+        const match = base64Data?.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
+        return match ? match[1] : 'application/octet-stream'; // Default if format is unknown/invalid
+    }
+    function getFileExtensionFromMime(mimeType) {
+        const mimeMap = {
+            'application/pdf': 'pdf',
+            'image/jpeg': 'jpg',
+            'image/jpg': 'jpg', // Common variation
+            'image/png': 'png',
+            'image/gif': 'gif',
+            // Add more as needed
+            'application/msword': 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+        };
+        return mimeMap[mimeType.toLowerCase()] || 'bin'; // Default binary extension, compare lowercase
+    }
+
+    function sanitizeFilename(name) {
+         // Replace invalid filename characters with underscores
+         return (name || "archivo").replace(/[\/\\?%*:|"<>]/g, '_');
+    }
+
+
+    // --- Vehicle Documents ---
+    function openVehicleDocModal(index, field, docName) {
+      if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            console.error("Invalid index for openVehicleDocModal:", index);
+            showToast("Error al abrir modal de documento.", "error"); return;
+       }
+      // Ensure field is valid
+       if (field !== 'polizaBase64' && field !== 'tarjetaCirculacionBase64') {
+            console.error("Invalid document field specified:", field);
+            showToast("Error interno: Tipo de documento no válido.", "error"); return;
+       }
+
+      currentVehicleIndex = index;
+      currentDocField = field; // Store the field name ('polizaBase64' or 'tarjetaCirculacionBase64')
+      const veh = vehicles[index];
+
+      const titleEl = document.getElementById("vehicleDocModalTitle");
+      const nameEl = document.getElementById("vehicleDocName");
+      const docActionsDiv = document.getElementById("vehicleDocActions");
+      const fileInput = document.getElementById("vehicleDocFileInput");
+
+      if (!titleEl || !nameEl || !docActionsDiv || !fileInput) {
+          console.error("Required elements not found in vehicle doc modal.");
+          return;
+      }
+
+      titleEl.textContent = docName;
+      nameEl.textContent = `${veh.marcaModelo || 'N/A'} (${veh.placas || 'N/A'})`;
+      docActionsDiv.innerHTML = ""; // Clear previous actions
+      fileInput.value = ""; // Clear file input
+
+      const base64Data = veh[field];
+      if (base64Data && typeof base64Data === 'string' && base64Data.startsWith('data:')) {
+        const mimeType = getMimeType(base64Data);
+        const extension = getFileExtensionFromMime(mimeType);
+        const safeDocName = sanitizeFilename(docName); // Sanitize name
+        const safePlacas = sanitizeFilename(veh.placas || 'SIN_PLACAS');
+        const fileName = `${safeDocName}_${safePlacas}.${extension}`;
+
+        // Create View Button
+        const viewBtn = document.createElement("a");
+        viewBtn.textContent = " Ver Documento Actual";
+        viewBtn.href = base64Data;
+        viewBtn.target = "_blank"; // Open in new tab
+        viewBtn.rel = "noopener noreferrer"; // Security best practice
+        viewBtn.className = "btn btn-success btn-sm";
+        viewBtn.innerHTML = `<i class="fas fa-eye"></i>` + viewBtn.textContent; // Prepend icon
+        docActionsDiv.appendChild(viewBtn);
+
+         // Create Download Button
+        const downloadBtn = document.createElement("a");
+        downloadBtn.textContent = " Descargar";
+        downloadBtn.href = base64Data;
+        downloadBtn.download = fileName; // Suggest filename for download
+        downloadBtn.className = "btn btn-info btn-sm";
+        downloadBtn.style.marginLeft = '10px';
+        downloadBtn.innerHTML = `<i class="fas fa-download"></i>` + downloadBtn.textContent; // Prepend icon
+        docActionsDiv.appendChild(downloadBtn);
+
+      } else {
+        docActionsDiv.innerHTML = '<p class="text-muted">No hay documento cargado.</p>';
+        if (base64Data && (!base64Data.startsWith('data:') || typeof base64Data !== 'string')) {
+             console.warn(`Invalid Base64 data format for vehicle ${index}, field ${field}`);
+        }
+      }
+
+      // Only open modal if it's not already active (prevents issues if called repeatedly)
+      const modalOverlay = document.getElementById('vehicleDocModalOverlay');
+      if (modalOverlay && !modalOverlay.classList.contains('active')) {
+          openModal('vehicleDocModalOverlay');
+      }
+    }
+
+    function uploadVehicleDoc() {
+      if (currentVehicleIndex === null || !currentDocField || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+           showToast("Error: No se ha seleccionado vehículo o tipo de documento válido.", "error");
+           console.error("uploadVehicleDoc called with invalid state:", currentVehicleIndex, currentDocField);
+           return;
+      }
+
+      const fileInput = document.getElementById("vehicleDocFileInput");
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        showToast("Por favor, selecciona un archivo para subir.", "warning");
+        return;
+      }
+      const file = fileInput.files[0];
+      const maxSize = 5 * 1024 * 1024; // 5 MB limit (adjust as needed)
+       if (file.size > maxSize) {
+           showToast(`El archivo es demasiado grande (máximo ${maxSize / 1024 / 1024} MB).`, "warning");
+           return;
+       }
+
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        try {
+            const base64Data = e.target.result;
+            if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) {
+                throw new Error("Invalid Base64 data generated.");
+            }
+            // Update the specific field on the vehicle object
+            vehicles[currentVehicleIndex][currentDocField] = base64Data;
+            saveToLocalStorage();
+            showToast("Documento subido exitosamente.", "success");
+            renderTable(); // Update table icons (like file/id-card)
+
+            // Refresh the modal content WITHOUT closing/reopening
+            const currentTitle = document.getElementById("vehicleDocModalTitle")?.textContent || "Documento";
+            openVehicleDocModal(currentVehicleIndex, currentDocField, currentTitle);
+
+        } catch (err) {
+             console.error("Error processing uploaded file:", err);
+             showToast("Error al procesar el archivo subido.", "error");
+        }
+      };
+       reader.onerror = function(e) {
+          console.error("FileReader error:", e);
+          showToast("Error al leer el archivo seleccionado.", "error");
+      };
+      reader.readAsDataURL(file); // Read file as Base64
+    }
+
+    // --- License Documents ---
+    function openLicenseDocModal(personIndex) {
+         if (personIndex === null || personIndex === undefined || personIndex < 0 || personIndex >= peopleLicenses.length || !peopleLicenses[personIndex]) {
+            console.error("Invalid index for openLicenseDocModal:", personIndex);
+            showToast("Error al abrir modal de licencia.", "error"); return;
+         }
+        currentPersonIndex = personIndex;
+        const person = peopleLicenses[personIndex];
+
+        const titleEl = document.getElementById("licenseDocModalTitle");
+        const nameEl = document.getElementById("licenseDocName");
+        const docActionsDiv = document.getElementById("licenseDocActions");
+        const fileInput = document.getElementById("licenseDocFileInput");
+
+        if (!titleEl || !nameEl || !docActionsDiv || !fileInput) {
+            console.error("Required elements not found in license doc modal.");
+            return;
+        }
+
+        titleEl.textContent = `Licencia de ${person.personName || 'N/A'}`;
+        nameEl.textContent = `${person.personName || 'N/A'}`;
+        docActionsDiv.innerHTML = ""; // Clear previous actions
+        fileInput.value = ""; // Clear file input
+
+        const base64Data = person.licenseBase64;
+        if (base64Data && typeof base64Data === 'string' && base64Data.startsWith('data:')) {
+            const mimeType = getMimeType(base64Data);
+            const extension = getFileExtensionFromMime(mimeType);
+            const safePersonName = sanitizeFilename(person.personName || 'SIN_NOMBRE');
+            const fileName = `Licencia_${safePersonName}.${extension}`;
+
+            // Create View Button
+            const viewBtn = document.createElement("a");
+            viewBtn.textContent = " Ver Licencia Actual";
+            viewBtn.href = base64Data;
+            viewBtn.target = "_blank";
+            viewBtn.rel = "noopener noreferrer";
+            viewBtn.className = "btn btn-success btn-sm";
+            viewBtn.innerHTML = `<i class="fas fa-eye"></i>` + viewBtn.textContent;
+            docActionsDiv.appendChild(viewBtn);
+
+            // Create Download Button
+            const downloadBtn = document.createElement("a");
+            downloadBtn.textContent = " Descargar";
+            downloadBtn.href = base64Data;
+            downloadBtn.download = fileName;
+            downloadBtn.className = "btn btn-info btn-sm";
+            downloadBtn.style.marginLeft = '10px';
+            downloadBtn.innerHTML = `<i class="fas fa-download"></i>` + downloadBtn.textContent;
+            docActionsDiv.appendChild(downloadBtn);
+
+        } else {
+            docActionsDiv.innerHTML = '<p class="text-muted">No hay licencia cargada.</p>';
+             if (base64Data && (!base64Data.startsWith('data:') || typeof base64Data !== 'string')) {
+                 console.warn(`Invalid Base64 data format for person ${personIndex}`);
+             }
+        }
+
+        // Only open modal if it's not already active
+        const modalOverlay = document.getElementById('licenseDocModalOverlay');
+        if (modalOverlay && !modalOverlay.classList.contains('active')) {
+             openModal('licenseDocModalOverlay');
+        }
+    }
+
+    function uploadLicenseDoc() {
+        if (currentPersonIndex === null || currentPersonIndex < 0 || currentPersonIndex >= peopleLicenses.length || !peopleLicenses[currentPersonIndex]) {
+            showToast("Error: No se ha seleccionado conductor válido.", "error");
+            console.error("uploadLicenseDoc called with invalid state:", currentPersonIndex);
+            return;
+        }
+
+        const fileInput = document.getElementById("licenseDocFileInput");
+         if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            showToast("Por favor, selecciona un archivo para subir.", "warning");
+            return;
+        }
+        const file = fileInput.files[0];
+         const maxSize = 5 * 1024 * 1024; // 5 MB limit
+         if (file.size > maxSize) {
+             showToast(`El archivo es demasiado grande (máximo ${maxSize / 1024 / 1024} MB).`, "warning");
+             return;
+         }
+
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+           try {
+                const base64Data = e.target.result;
+                 if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) {
+                    throw new Error("Invalid Base64 data generated.");
+                 }
+                peopleLicenses[currentPersonIndex].licenseBase64 = base64Data;
+                saveToLocalStorage();
+                showToast("Licencia subida exitosamente.", "success");
+                renderLicensesTable(); // Update main license list (in its modal)
+
+                // Refresh the modal content WITHOUT closing/reopening
+                openLicenseDocModal(currentPersonIndex);
+
+           } catch (err) {
+                console.error("Error processing uploaded license file:", err);
+                showToast("Error al procesar el archivo de licencia.", "error");
+           }
+        };
+        reader.onerror = function(e) {
+             console.error("FileReader error:", e);
+             showToast("Error al leer el archivo de licencia.", "error");
+        };
+        reader.readAsDataURL(file);
+    }
+
+
+    /* ========================================================================== */
+    /*  9. UPCOMING DEADLINES MODAL                                               */
+    /* ========================================================================== */
+
+    function showProximosTramitesModal() {
+      let htmlContent = "";
+      let found = false;
+       const itemsList = []; // Collect items to sort later
+
+       vehicles.forEach((veh) => {
+            if (!veh || typeof veh !== 'object') return; // Skip invalid entries
+
+            const marcaModelo = veh.marcaModelo || 'N/A';
+            const placas = veh.placas || 'N/A';
+            const vehicleIdentifier = `${marcaModelo} (${placas})`;
+
+            // Get status info for each relevant date/task
+            const mantInfo = { ...isWithinDays(veh.proximoMantenimiento, 30), type: 'Mantenimiento', date: veh.proximoMantenimiento, vehicle: vehicleIdentifier };
+            const placasInfo = { ...isWithinDays(veh.cambioPlacas, 30), type: 'Cambio Placas', date: veh.cambioPlacas, vehicle: vehicleIdentifier };
+            const seguroInfo = { ...isWithinDays(veh.vencimientoSeguro, 30), type: 'Vence Seguro', date: veh.vencimientoSeguro, vehicle: vehicleIdentifier };
+            const verifInfoRaw = getNextVerificationInfo(veh.placas);
+            // Adapt verification info for consistent structure - use end date for sorting urgency
+            const verifInfo = { ...verifInfoRaw, type: `Verificación ${verifInfoRaw.text || ''}`, date: null, /* No specific date for period */ isNear: verifInfoRaw.isNear, status: verifInfoRaw.status, daysDiff: verifInfoRaw.daysDiff, vehicle: vehicleIdentifier };
+
+
+             // Add items to the list only if they are near or overdue
+            [mantInfo, placasInfo, seguroInfo, verifInfo].forEach(info => {
+                // Only include items that have a status indicating they are due or overdue
+                if (info.isNear && info.status !== 'future' && info.status !== 'nodate' && info.status !== 'invalid' && info.status !== 'error') {
+                    itemsList.push(info);
+                    found = true;
+                }
+            });
+        });
+
+        // Sort the collected items by urgency (daysDiff ascending - overdue first, then closest due dates)
+        itemsList.sort((a, b) => (a.daysDiff === null || a.daysDiff === Infinity ? 9999 : a.daysDiff) - (b.daysDiff === null || b.daysDiff === Infinity ? 9999 : b.daysDiff));
+
+        if (!found) {
+            htmlContent = "<p class='text-muted text-center'>No hay trámites próximos o vencidos en los siguientes 30 días.</p>";
+        } else {
+             htmlContent += '<ul style="list-style: none; padding-left: 0;">';
+             itemsList.forEach(info => {
+                  let badgeClass = (info.status === 'overdue') ? 'badge-danger' : 'badge-warning';
+                  let icon = (info.status === 'overdue') ? '<i class="fas fa-exclamation-circle"></i> ' : '<i class="fas fa-clock"></i> ';
+                  let dateText = info.date ? ` - ${info.date}` : ''; // Show date if available (not for verification period)
+                  let statusText = '';
+                  if (info.daysDiff !== null && info.daysDiff !== Infinity) {
+                       if (info.daysDiff < 0) statusText = ` (${Math.abs(info.daysDiff)} día${Math.abs(info.daysDiff)!==1 ? 's':''} atrasado)`;
+                       else if (info.daysDiff === 0) statusText = ' (Hoy)';
+                       else statusText = ` (en ${info.daysDiff} día${info.daysDiff!==1 ? 's':''})`;
+                  }
+
+                 htmlContent += `
+                     <li style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                         <strong>${info.vehicle}:</strong><br>
+                         <span class="badge ${badgeClass}" style="margin-top: 5px;">
+                            ${icon}${info.type}${dateText}${statusText}
+                         </span>
+                     </li>`;
+             });
+             // Remove border from last item
+             htmlContent = htmlContent.replace(/border-bottom: 1px solid #eee;(?=<\/li>\s*<\/ul>)/, '');
+             htmlContent += '</ul>';
+        }
+
+
+      const tramitesContentDiv = document.getElementById("tramitesContent");
+      if (tramitesContentDiv) {
+          tramitesContentDiv.innerHTML = htmlContent;
+      } else {
+           console.error("Tramites content div not found.");
+      }
+      openModal('tramitesModalOverlay');
+    }
+
+    function printTramites() {
+      const tramitesDiv = document.getElementById("tramitesContent");
+      if (!tramitesDiv) {
+          showToast("Error al encontrar contenido para imprimir.", "error");
+          return;
+      }
+      // Get the actual rendered HTML content
+      const contentToPrint = tramitesDiv.innerHTML;
+
+       // Basic styling for print
+       const printStyles = `
+         <style>
+           body { font-family: Arial, sans-serif; margin: 20px; font-size: 10pt; }
+           h2 { text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; font-size: 14pt;}
+           ul { list-style: none; padding-left: 0; }
+           li { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; page-break-inside: avoid; }
+           li:last-child { border-bottom: none; }
+           strong { font-weight: bold; display: block; margin-bottom: 3px;}
+           .badge { border: 1px solid #ccc; padding: 3px 6px; border-radius: 4px; display: inline-block; font-size: 9pt; white-space: nowrap; color: black; background-color: #eee;}
+           .badge-danger { background-color: #dc3545 !important; color: white !important; border-color: #dc3545 !important;}
+           .badge-warning { background-color: #ffc107 !important; color: black !important; border-color: #ffc107 !important;}
+           /* Ensure colors print - some browsers need !important */
+           @media print {
+              body { margin: 15mm; } /* Adjust print margins */
+              .badge-danger, .badge-warning { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              li { border-color: #ddd; }
+           }
+           i { margin-right: 5px; }
+           p.text-muted { text-align: center; color: #6c757d; font-style: italic; }
+         </style>
+       `;
+      // Construct full HTML document for printing
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Próximos Trámites - LEFIOS CARS</title>
+            ${printStyles}
+            <!-- Include Font Awesome CSS for icons in print -->
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        </head>
+        <body>
+            <h2><i class="fas fa-calendar-check"></i> Próximos Trámites (Siguientes 30 días)</h2>
+            ${contentToPrint}
+        </body>
+        </html>`;
+
+      openPrintWindow(fullHtml, "Próximos Trámites");
+    }
+
+    /* ========================================================================== */
+    /*  10. PRINTING (Generic & Summary)                                        */
+    /* ========================================================================== */
+
+    function openPrintWindow(htmlContent, title = "Imprimir") {
+      // Check if the content is likely a full HTML document string
+      const isFullHtml = typeof htmlContent === 'string' && htmlContent.trim().toLowerCase().startsWith('<html');
+      let printWindow;
+      try {
+         printWindow = window.open("", "_blank", "width=800,height=600,scrollbars=yes,resizable=yes");
+      } catch (e) {
+          console.error("Error opening print window (popup blocker?):", e);
+          showToast("Error al abrir ventana de impresión. Revisa bloqueadores de pop-ups.", "error");
+          return;
+      }
+
+
+       if (!printWindow) {
+            showToast("No se pudo abrir la ventana de impresión. Revisa bloqueadores de pop-ups.", "error");
+            return;
+       }
+
+      try {
+          printWindow.document.open();
+          if (isFullHtml) {
+              // Write the full HTML directly
+              printWindow.document.write(htmlContent);
+          } else {
+              // Wrap content fragment in basic HTML structure
+              printWindow.document.write(`
+                  <!DOCTYPE html>
+                  <html lang="es">
+                  <head>
+                      <meta charset="UTF-8">
+                      <title>${title} - LEFIOS CARS</title>
+                      <style>
+                          body { font-family: Arial, sans-serif; margin: 25px; font-size: 10pt; }
+                          h2, h3 { margin-top: 1.2em; margin-bottom: 0.6em; padding-bottom: 5px; border-bottom: 1px solid #ccc; page-break-after: avoid; color: #333; }
+                          h2 { font-size: 14pt; } h3 { font-size: 12pt; }
+                          table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: auto; }
+                          tr { page-break-inside: avoid; page-break-after: auto; }
+                          thead { display: table-header-group; } /* Repeat header on new pages */
+                          th, td { border: 1px solid #ccc; padding: 6px; text-align: left; vertical-align: top; word-wrap: break-word; }
+                          th { background-color: #f2f2f2; font-weight: bold; color: #000;}
+                          p { margin: 5px 0 10px 0; line-height: 1.4; }
+                          ul { margin-top: 0; padding-left: 25px; } li { margin-bottom: 5px; }
+                          hr { border: none; border-top: 1px dashed #ccc; margin: 20px 0; }
+                          @media print {
+                              body { font-size: 9pt; margin: 20mm; } /* Adjust print margins */
+                              h2, h3 { border-bottom: 1px solid #999; color: #000; }
+                              th, td { border: 1px solid #999; padding: 5px;}
+                              th { background-color: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } /* Ensure header bg prints */
+                              a { text-decoration: none; color: inherit; } /* Avoid printing underlines/colors */
+                              p, li { orphans: 3; widows: 3; } /* Prevent single lines at top/bottom of page */
+                          }
+                      </style>
+                      <!-- Include Font Awesome for icons if needed, though they might not always print well -->
+                      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                  </head>
+                  <body>
+                      ${htmlContent}
+                  </body>
+                  </html>
+              `);
+          }
+          printWindow.document.close();
+
+           // Use timeout to ensure content is fully loaded and rendered before printing
+           setTimeout(() => {
+                try {
+                    printWindow.focus(); // Bring window to front
+                    printWindow.print();
+                    // Optional: Attempt to close window after print dialog (unreliable)
+                    // Consider adding a manual close button within the print content if needed
+                } catch (printErr) {
+                    console.error("Error during print command:", printErr);
+                     showToast("Error al ejecutar el comando de impresión.", "error");
+                     // Close if print failed immediately (might still be blocked)
+                     try { if (!printWindow.closed) printWindow.close(); } catch(e){}
+                }
+           }, 750); // Delay slightly
+
+      } catch (e) {
+            console.error("Error writing to or preparing print window:", e);
+            showToast("Error al preparar la ventana de impresión.", "error");
+            try { if (printWindow && !printWindow.closed) printWindow.close(); } catch (closeErr) {} // Attempt to close
+      }
+  }
+
+
+    function printVehicleSummary(index) {
+      if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+           showToast("Error al generar resumen: Vehículo no válido.", "error"); return;
+      }
+      const veh = vehicles[index];
+      // Ensure arrays exist before accessing/sorting
+      const fallasArray = Array.isArray(veh.fallas) ? veh.fallas : [];
+      const mantosArray = Array.isArray(veh.mantenimientos) ? veh.mantenimientos : [];
+
+      // --- Fallas Section ---
+      let fallasHTML = "<h3><i class=\"fas fa-wrench\"></i> Fallas Registradas</h3>";
+      if (fallasArray.length === 0) {
+        fallasHTML += "<p>No hay fallas registradas.</p>";
+      } else {
+        fallasHTML += "<ul>";
+         // Sort ascending by date for chronological order
+         [...fallasArray].sort((a, b) => (a?.fechaFalla || '9999').localeCompare(b?.fechaFalla || '9999')).forEach(f => {
+            // Check if falla is valid before printing
+            if (f && typeof f === 'object') {
+                 fallasHTML += `<li>${f.fechaFalla ? `<strong>${f.fechaFalla}:</strong> ` : ""}${f.descripcion || 'N/A'}</li>`;
+            }
+        });
+        fallasHTML += "</ul>";
+      }
+
+      // --- Maintenance Section ---
+      let mantoHTML = "<h3><i class=\"fas fa-tools\"></i> Historial de Mantenimientos</h3>";
+      if (mantosArray.length === 0) {
+        mantoHTML += "<p>No hay mantenimientos registrados.</p>";
+      } else {
+        mantoHTML += `<table><thead><tr><th>Fecha</th><th>Kilometraje</th><th>Próximo Cambio</th></tr></thead><tbody>`;
+        // Sort ascending by date
+        [...mantosArray].sort((a, b) => (a?.fechaManto || '9999').localeCompare(b?.fechaManto || '9999')).forEach(m => {
+            if (m && typeof m === 'object') {
+                 mantoHTML += `<tr><td>${m.fechaManto || "N/A"}</td><td>${m.kilometraje || "N/A"}</td><td>${m.proximoCambio || "N/A"}</td></tr>`;
+            }
+        });
+        mantoHTML += "</tbody></table>";
+      }
+
+      // --- Summary Section ---
+      const summaryHTML = `
+          <h2><i class="fas fa-car"></i> Resumen de Vehículo</h2>
+          <p><strong>Marca/Modelo:</strong> ${veh.marcaModelo || 'N/A'}</p>
+          <p><strong>Modelo (Específico):</strong> ${veh.modelo || 'N/A'}</p>
+          <p><strong>Año:</strong> ${veh.año || 'N/A'}</p>
+          <p><strong>Color:</strong> ${veh.color || 'N/A'}</p>
+          <p><strong>Placas:</strong> ${veh.placas || 'N/A'}</p>
+          <p><strong>Número de Serie:</strong> ${veh.numeroSerie || 'N/A'}</p>
+          <p><strong>Fecha de Adquisición:</strong> ${veh.fechaAdquisicion || 'N/A'}</p>
+          <p><strong>Kilometraje Registrado:</strong> ${veh.kilometraje || 'N/A'}</p>
+          <hr>
+          <p><strong>Próximo Mantenimiento:</strong> ${veh.proximoMantenimiento || 'N/A'}</p>
+          <p><strong>Próximo Cambio de Placas:</strong> ${veh.cambioPlacas || 'N/A'}</p>
+          <p><strong>Vencimiento Seguro:</strong> ${veh.vencimientoSeguro || 'N/A'}</p>
+          <p><strong>Aseguradora:</strong> ${veh.aseguradora || 'N/A'}</p>
+          <p><strong>Teléfono Seguro:</strong> ${veh.telefono || 'N/A'}</p>
+          <p><strong>Último Refrendo Pagado:</strong> ${veh.refrendoAnioPagado || 'No registrado'}</p>
+           <hr>
+          <p><strong>Observaciones:</strong></p>
+          <p style="padding-left: 15px; font-style: italic;">${veh.observaciones ? veh.observaciones.replace(/\n/g, '<br>') : 'Ninguna'}</p> <!-- Preserve line breaks -->
+          <hr>
+          ${fallasHTML}
+          <hr>
+          ${mantoHTML}
+      `;
+      openPrintWindow(summaryHTML, `Resumen - ${veh.marcaModelo || 'Vehículo'}`);
+    }
+
+
+    /* ========================================================================== */
+    /*  11. STATES & LINKS MANAGEMENT                                             */
+    /* ========================================================================== */
+
+    function openStatesLinksModal() {
+        renderStatesLinks();
+        openModal('statesLinksModalOverlay');
+    }
+
+    function renderStatesLinks() {
+      const container = document.getElementById("statesContainer");
+      if (!container) {
+           console.error("States container not found!");
+           return;
+      }
+      container.innerHTML = "";
+
+      const statesArray = Array.isArray(statesData) ? statesData : [];
+
+      if (statesArray.length === 0) {
+          container.innerHTML = '<p class="text-muted text-center">No hay estados definidos. Agrega uno para empezar.</p>';
+          return;
+      }
+
+      statesArray.forEach((st, stIndex) => {
+         // Validate state object
+         if (!st || typeof st !== 'object' || st.id === undefined || st.id === null) {
+             console.warn("Skipping invalid state entry:", st);
+             return;
+         }
+         const stateId = st.id; // Use existing ID
+
+        const stateDiv = document.createElement("div");
+        stateDiv.className = "state-block";
+        stateDiv.setAttribute('data-state-id', stateId);
+        stateDiv.innerHTML = `
+            <div class="state-header">
+                 <input type="text" value="${st.stateName || ''}" onchange="updateStateName(${stIndex}, this.value)" placeholder="Nombre Estado" aria-label="Nombre del Estado">
+                 <button class="btn btn-danger btn-sm btn-icon" onclick="deleteState(${stIndex})" title="Eliminar Estado">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+            <ul id="stateLinks-${stateId}" class="link-list"></ul>
+            <button class="btn btn-success btn-sm mt-1" onclick="addStateLink(${stIndex})">
+                <i class="fas fa-plus"></i> Agregar Link a ${st.stateName || 'este estado'}
+            </button>
+        `;
+        container.appendChild(stateDiv);
+
+        const ul = stateDiv.querySelector(`#stateLinks-${stateId}`);
+        // *** CORRECTION HERE: Replaced 'continue' with 'return' ***
+        if (!ul) {
+             console.warn(`Could not find UL element for stateLinks-${stateId}`);
+             return; // Skips the rest of this iteration for this state
+        }
+
+         // Ensure links array exists
+        if (!Array.isArray(st.links)) {
+            st.links = [];
+        }
+        const linksArray = st.links;
+
+        if (linksArray.length === 0) {
+            ul.innerHTML = '<li class="text-muted" style="padding: 5px 0;">No hay links para este estado.</li>';
+        } else {
+            linksArray.forEach((linkObj, linkIndex) => {
+                 // Validate link object
+                 if (!linkObj || typeof linkObj !== 'object' || linkObj.id === undefined || linkObj.id === null) {
+                      console.warn(`Skipping invalid link entry in state ${stIndex}:`, linkObj);
+                      return; // Skip to next link
+                 }
+                 const linkId = linkObj.id; // Use existing ID
+
+                const li = document.createElement("li");
+                li.className = "link-item";
+                li.setAttribute('data-link-id', linkId);
+                // Use unique IDs for inputs for better label association (though not strictly needed with onchange)
+                const labelInputId = `linkLabel-${stateId}-${linkId}`;
+                const urlInputId = `linkUrl-${stateId}-${linkId}`;
+
+                // Use onchange for inputs - saves on blur or enter
+                li.innerHTML = `
+                     <input type="text" id="${labelInputId}" class="form-control form-control-sm" style="flex-basis: 180px;" placeholder="Descripción" value="${linkObj.label || ''}"
+                        onchange="updateStateLinkLabel(${stIndex}, ${linkIndex}, this.value)" aria-label="Descripción del Link" />
+                     <input type="text" id="${urlInputId}" class="form-control form-control-sm" style="flex-basis: 300px;" placeholder="URL (ej: https://...)" value="${linkObj.url || ''}"
+                        onchange="updateStateLinkUrl(${stIndex}, ${linkIndex}, this.value)" aria-label="URL del Link" />
+                     <a href="${linkObj.url || '#'}" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-sm btn-icon ${!linkObj.url ? 'disabled' : ''}" title="Abrir Link">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                    <button class="btn btn-danger btn-sm btn-icon"
+                        onclick="deleteStateLink(${stIndex}, ${linkIndex})" title="Eliminar Link">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                ul.appendChild(li);
+            });
+        }
+      });
+    }
+
+    function addState() {
+      const name = prompt("Nombre del nuevo Estado:");
+      if (name && name.trim()) {
+        // Ensure statesData is an array
+        if (!Array.isArray(statesData)) statesData = [];
+        statesData.push({ id: Date.now(), stateName: name.trim(), links: [] });
+        saveToLocalStorage();
+        renderStatesLinks(); // Update display in the modal
+         showToast(`Estado "${name.trim()}" agregado.`, "success");
+      } else if (name !== null) { // User didn't press cancel, but input was empty
+           showToast("El nombre del estado no puede estar vacío.", "warning");
+      }
+    }
+
+     function updateStateName(stIndex, newName) {
+        if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex]) {
+            showToast("Error al actualizar nombre del estado.", "error"); return;
+        }
+        const trimmedName = newName.trim();
+        if (trimmedName) {
+             statesData[stIndex].stateName = trimmedName;
+             saveToLocalStorage();
+             // Update the "Add Link" button text dynamically without full re-render
+             const stateBlock = document.querySelector(`.state-block[data-state-id="${statesData[stIndex].id}"]`);
+             if (stateBlock) {
+                 const addLinkBtn = stateBlock.querySelector('.btn-success');
+                 if (addLinkBtn) {
+                     addLinkBtn.innerHTML = `<i class="fas fa-plus"></i> Agregar Link a ${trimmedName}`;
+                 }
+             }
+             // showToast(`Nombre del estado actualizado a "${trimmedName}".`, "info"); // Optional feedback
+        } else {
+            showToast("El nombre del estado no puede estar vacío.", "warning");
+            // Revert the input visually to the last saved name
+            const stateBlock = document.querySelector(`.state-block[data-state-id="${statesData[stIndex].id}"]`);
+             if (stateBlock) {
+                 const nameInput = stateBlock.querySelector('.state-header input[type="text"]');
+                 if (nameInput) {
+                     nameInput.value = statesData[stIndex].stateName; // Revert
+                 }
+             }
+        }
+    }
+
+    function deleteState(stIndex) {
+      if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex]) {
+           showToast("Error al encontrar el estado a eliminar.", "error"); return;
+      }
+      const stateName = statesData[stIndex].stateName || "este estado";
+      if (confirm(`¿Eliminar el Estado "${stateName}" y todos sus links asociados?`)) {
+        const deletedName = statesData[stIndex].stateName;
+        statesData.splice(stIndex, 1);
+        saveToLocalStorage();
+        renderStatesLinks(); // Update display in the modal
+        showToast(`Estado "${deletedName}" eliminado.`, "info");
+      }
+    }
+
+    function addStateLink(stIndex) {
+       if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex]) {
+           showToast("Error: Estado no encontrado para agregar link.", "error"); return;
+       }
+       // Ensure the links property is an array
+        if (!Array.isArray(statesData[stIndex].links)) {
+            statesData[stIndex].links = [];
+        }
+      statesData[stIndex].links.push({ id: Date.now(), label: "", url: "" });
+      saveToLocalStorage();
+      renderStatesLinks(); // Update display in the modal
+       // Could try to focus the new input, but might be complex/fragile due to re-render
+    }
+
+    function deleteStateLink(stIndex, linkIndex) {
+       if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex] ||
+           !Array.isArray(statesData[stIndex].links) || linkIndex < 0 || linkIndex >= statesData[stIndex].links.length || !statesData[stIndex].links[linkIndex]) {
+            showToast("Error al encontrar el link a eliminar.", "error"); return;
+       }
+      statesData[stIndex].links.splice(linkIndex, 1);
+      saveToLocalStorage();
+      renderStatesLinks(); // Update display in the modal
+      showToast("Link eliminado.", "info");
+    }
+
+    function updateStateLinkLabel(stIndex, linkIndex, newVal) {
+       if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex] ||
+           !Array.isArray(statesData[stIndex].links) || linkIndex < 0 || linkIndex >= statesData[stIndex].links.length || !statesData[stIndex].links[linkIndex]) {
+            showToast("Error al actualizar la descripción del link.", "error"); return;
+       }
+      // Update directly, trim whitespace
+      statesData[stIndex].links[linkIndex].label = newVal.trim();
+      saveToLocalStorage(); // Save immediately on change
+      // No full re-render needed, change is saved in data model
+    }
+
+    function updateStateLinkUrl(stIndex, linkIndex, newVal) {
+       if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex] ||
+           !Array.isArray(statesData[stIndex].links) || linkIndex < 0 || linkIndex >= statesData[stIndex].links.length || !statesData[stIndex].links[linkIndex]) {
+            showToast("Error al actualizar la URL del link.", "error"); return;
+       }
+       const trimmedUrl = newVal.trim();
+       statesData[stIndex].links[linkIndex].url = trimmedUrl;
+      saveToLocalStorage(); // Save immediately on change
+
+      // Update the 'Open' link button state and href dynamically without full re-render
+       const stateId = statesData[stIndex].id;
+       const linkId = statesData[stIndex].links[linkIndex].id;
+       // More specific selector using data attributes
+       const linkElement = document.querySelector(`.state-block[data-state-id="${stateId}"] .link-item[data-link-id="${linkId}"]`);
+       if (linkElement) {
+           const openBtn = linkElement.querySelector('a.btn-info');
+           if (openBtn) {
+               openBtn.href = trimmedUrl || '#'; // Update href
+               // Toggle 'disabled' class based on whether URL is present
+               if (trimmedUrl) {
+                   openBtn.classList.remove('disabled');
+                   openBtn.removeAttribute('aria-disabled');
+               } else {
+                   openBtn.classList.add('disabled');
+                   openBtn.setAttribute('aria-disabled', 'true');
+               }
+           }
+       }
+    }
+
+    /* ========================================================================== */
+    /*  12. DRIVER LICENSES MANAGEMENT (Dynamic)                                  */
+    /* ========================================================================== */
+
+    function openLicensesModal() {
+        renderLicensesTable();
+        openModal('licensesModalOverlay');
+    }
+
+    function renderLicensesTable() {
+      const tbody = document.getElementById("licensesTableBody");
+      if (!tbody) {
+           console.error("Licenses table body not found!");
+           return;
+      }
+      tbody.innerHTML = ""; // Clear previous
+
+       const peopleArray = Array.isArray(peopleLicenses) ? peopleLicenses : [];
+
+       if (peopleArray.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay conductores registrados. Agrega uno para empezar.</td></tr>';
+          return;
+      }
+
+      peopleArray.forEach((person, index) => {
+         // Validate person object
+         if (!person || typeof person !== 'object' || person.id === undefined || person.id === null) {
+             console.warn("Skipping invalid person entry:", person);
+             return;
+         }
+         const personId = person.id; // Use existing ID
+
+        const tr = document.createElement("tr");
+        tr.setAttribute('data-person-id', personId); // Store ID on the row
+
+        tr.innerHTML = `
+          <td>
+            <input type="text" class="form-control form-control-sm" value="${person.personName || ''}" placeholder="Nombre del conductor"
+              onchange="updatePersonName(${index}, this.value)" aria-label="Nombre del Conductor">
+          </td>
+          <td class="text-center">
+            ${person.licenseBase64 && typeof person.licenseBase64 === 'string' && person.licenseBase64.startsWith('data:')
+                ? '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Cargada</span>'
+                : '<span class="badge badge-secondary"><i class="fas fa-times-circle"></i> Sin Cargar</span>'}
+          </td>
+          <td class="text-center"> <!-- Centered actions -->
+            <button class="btn btn-info btn-sm" onclick="openLicenseDocModal(${index})" title="${person.licenseBase64 ? 'Ver/Actualizar Licencia' : 'Subir Licencia'}">
+                <i class="fas fa-upload"></i> ${person.licenseBase64 ? 'Ver/Actualizar' : 'Subir'}
+            </button>
+             <button class="btn btn-danger btn-sm btn-icon" onclick="deletePerson(${index})" title="Eliminar Conductor">
+                <i class="fas fa-user-minus"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function addPerson() {
+        const newName = prompt("Nombre del nuevo conductor:", "");
+        if (newName && newName.trim()) {
+            // Ensure array exists
+            if (!Array.isArray(peopleLicenses)) peopleLicenses = [];
+            peopleLicenses.push({ id: Date.now(), personName: newName.trim(), licenseBase64: "" });
+            saveToLocalStorage();
+            renderLicensesTable(); // Update display in modal
+            showToast(`Conductor "${newName.trim()}" agregado.`, "success");
+        } else if (newName !== null) { // User didn't cancel, but input was empty
+             showToast("El nombre del conductor no puede estar vacío.", "warning");
+        }
+    }
+
+    function deletePerson(index) {
+        if (!Array.isArray(peopleLicenses) || index < 0 || index >= peopleLicenses.length || !peopleLicenses[index]) {
+             showToast("Error al encontrar conductor a eliminar.", "error"); return;
+        }
+        const personName = peopleLicenses[index].personName || "este conductor";
+         if (confirm(`¿Eliminar al conductor "${personName}"?`)) {
+            const deletedName = peopleLicenses[index].personName;
+            peopleLicenses.splice(index, 1);
+            saveToLocalStorage();
+            renderLicensesTable(); // Update display in modal
+            showToast(`Conductor "${deletedName}" eliminado.`, "info");
+        }
+    }
+
+    function updatePersonName(index, newVal) {
+      if (!Array.isArray(peopleLicenses) || index < 0 || index >= peopleLicenses.length || !peopleLicenses[index]) {
+             showToast("Error al actualizar nombre del conductor.", "error"); return;
+       }
+      const trimmedName = newVal.trim();
+       if (trimmedName) {
+           peopleLicenses[index].personName = trimmedName;
+           saveToLocalStorage(); // Save immediately
+           // Optional feedback:
+           // showToast(`Nombre actualizado a "${trimmedName}".`, "info");
+       } else {
+            showToast("El nombre del conductor no puede estar vacío.", "warning");
+            // Revert the input visually - find the input in the specific row and set its value back
+             const personId = peopleLicenses[index].id;
+             const input = document.querySelector(`#licensesTableBody tr[data-person-id="${personId}"] input[type="text"]`);
+            if (input) input.value = peopleLicenses[index].personName; // Revert to saved name
+       }
+    }
+
+    /* ========================================================================== */
+    /*  13. GLOBAL ACTIONS & INITIALIZATION                                       */
+    /* ========================================================================== */
+
+     // Save All (Provides manual confirmation and ensures persistence)
+    function saveAll() {
+        // This function acts as a manual trigger to ensure data is saved.
+        // Most changes are saved immediately via other functions (onchange, modal saves),
+        // but this provides a clear "Save" action for the user.
+        console.log("Manual save triggered.");
+        saveToLocalStorage(); // Ensure everything is persisted
+        showToast("Cambios guardados manualmente.", "success");
+    }
+
+    // Initial Load Function
+    function initializeApp() {
+        console.log("Initializing LEFIOS CARS App...");
+        try {
+            renderTable(); // Initial render of the vehicle table
+
+            // Add event listener for sorting to the table's THEAD
+            const tableHead = document.querySelector('#vehicleTable thead');
+             if (tableHead) {
+                 tableHead.addEventListener('click', handleSort);
+             } else {
+                 console.error("Table head #vehicleTable thead not found for attaching sort listener!");
+                 showToast("Advertencia: Funcionalidad de ordenamiento de tabla no disponible.", "warning");
+             }
+
+            showToast("Aplicación LEFIOS CARS cargada.", "info");
+            console.log("App Initialized Successfully.");
+
+        } catch (error) {
+            console.error("CRITICAL ERROR during application initialization:", error);
+            showToast("Error crítico al iniciar la aplicación. Revisa la consola.", "error");
+            // Display a more prominent error message to the user?
+             const container = document.querySelector('.container');
+             if (container) {
+                 const errorDiv = document.createElement('div');
+                 errorDiv.style.color = 'red';
+                 errorDiv.style.border = '2px solid red';
+                 errorDiv.style.padding = '15px';
+                 errorDiv.style.marginTop = '20px';
+                 errorDiv.style.backgroundColor = '#ffecec';
+                 errorDiv.innerHTML = '<strong>Error Crítico:</strong> La aplicación no pudo iniciarse correctamente. Los datos podrían no cargarse o guardarse. Por favor, revisa la consola del navegador (F12) para más detalles o intenta recargar la página. Si el problema persiste, contacta al soporte.';
+                 // Prepend error message inside the container
+                 if (container.firstChild) {
+                    container.insertBefore(errorDiv, container.firstChild);
+                 } else {
+                    container.appendChild(errorDiv);
+                 }
+             }
+        }
+    }
+
+    // --- Run Initialization on Load ---
+    // Use DOMContentLoaded for faster script execution (runs when HTML is parsed, before all images etc. load)
+    document.addEventListener('DOMContentLoaded', initializeApp);
+
+  </script>
+</body>
+</html>
