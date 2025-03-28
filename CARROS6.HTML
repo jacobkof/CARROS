@@ -1,3 +1,3478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LEFIOS CARS - Gestión de Flotilla</title>
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* === Estilos Globales === */
+    :root {
+      --primary-color: #0056b3; /* Darker Blue */
+      --primary-hover: #004494;
+      --secondary-color: #6c757d; /* Gray */
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --info-color: #17a2b8;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --white-color: #ffffff;
+      --border-color: #dee2e6;
+      --background-color: #f1f3f5; /* Lighter gray background */
+      --text-color: #212529;
+      --text-muted: #6c757d;
+      --font-family-sans-serif: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --base-font-size: 14px;
+      --border-radius: 0.3rem;
+      --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      --box-shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      /* Verification Cell Colors */
+      --verif-overdue-bg: #f8d7da;    /* Red */
+      --verif-overdue-text: #721c24;
+      --verif-due-bg: #fff3cd;        /* Yellow */
+      --verif-due-text: #856404;
+      --verif-ok-bg: #d4edda;         /* Green (Used for 'Verified this period') */
+      --verif-ok-text: #155724;
+      --verif-future-bg: transparent; /* For future, no special bg */
+      --verif-future-text: var(--text-color);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family-sans-serif);
+      background-color: var(--background-color);
+      color: var(--text-color);
+      padding: 20px;
+      font-size: var(--base-font-size);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1600px; /* Wider for potentially more columns */
+      margin: 20px auto;
+      padding: 25px;
+      background-color: var(--white-color);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow-lg);
+    }
+
+    h1, h2, h3 {
+      color: var(--dark-color);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.2rem; }
+
+    /* === Botones === */
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      padding: 0.5rem 0.8rem;
+      font-size: var(--base-font-size);
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      text-decoration: none; /* For link buttons */
+      color: var(--white-color);
+      background-color: var(--primary-color);
+      vertical-align: middle; /* Ensure alignment */
+    }
+    button:hover, .btn:hover {
+      background-color: var(--primary-hover);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    button:disabled, .btn:disabled {
+      background-color: var(--secondary-color);
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .btn-secondary { background-color: var(--secondary-color); color: white; }
+    .btn-secondary:hover { background-color: #5a6268; }
+    .btn-success { background-color: var(--success-color); color: white; }
+    .btn-success:hover { background-color: #218838; }
+    .btn-danger { background-color: var(--danger-color); color: white; }
+    .btn-danger:hover { background-color: #c82333; }
+    .btn-warning { background-color: var(--warning-color); color: var(--dark-color); }
+    .btn-warning:hover { background-color: #e0a800; }
+    .btn-info { background-color: var(--info-color); color: white; }
+    .btn-info:hover { background-color: #138496; }
+    .btn-light { background-color: var(--light-color); color: var(--dark-color); border: 1px solid var(--border-color); }
+    .btn-light:hover { background-color: #e2e6ea; }
+    .btn-link { background: none; border: none; color: var(--primary-color); text-decoration: underline; padding: 0; }
+    .btn-link:hover { color: var(--primary-hover); }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8em;
+      gap: 0.3em;
+    }
+    .btn-icon {
+      padding: 0.4rem 0.6rem; /* Slightly smaller for icon-only */
+    }
+
+    /* === Secciones y Layout === */
+    .section {
+      background-color: var(--white-color);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      margin-bottom: 25px;
+    }
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .section-header h2 {
+        margin-bottom: 0;
+        text-align: left;
+    }
+
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    /* Search Bar Container */
+    .search-container {
+        position: relative; /* Needed for absolute positioning of suggestions */
+        display: flex;
+        align-items: center;
+        gap: 5px; /* Adjust gap as needed */
+    }
+    .search-bar { /* Adjusted - now part of search-container */
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-grow: 1; /* Allow search bar to take available space */
+    }
+    .search-bar input[type="text"] {
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      min-width: 250px;
+      flex-grow: 1; /* Allow input to grow */
+    }
+     /* Suggestions List */
+    .search-suggestions-list {
+        display: none; /* Hidden by default */
+        position: absolute;
+        top: 100%; /* Position below the input */
+        left: 0;
+        right: 0; /* Span the width of the search container */
+        background-color: var(--white-color);
+        border: 1px solid var(--border-color);
+        border-top: none; /* Optional: avoid double border */
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 100; /* Ensure it's above other content */
+        box-shadow: var(--box-shadow);
+    }
+    .suggestion-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+    .suggestion-item:hover {
+        background-color: var(--light-color);
+    }
+    .suggestion-item mark { /* Style for highlighted part */
+        background-color: #fff3cd; /* Light yellow */
+        font-weight: bold;
+        padding: 0;
+    }
+
+    .action-buttons-left { order: 1; } /* Buttons group 1 */
+    .action-buttons-right { order: 3; } /* Buttons group 2 (including search/add) */
+
+    .action-buttons-left button, .action-buttons-left .btn { margin-right: 5px; margin-bottom: 5px;} /* Spacing for left buttons */
+    .action-buttons-right {display: flex; align-items: center; gap: 5px;} /* Keep these buttons together */
+    .action-buttons-right button, .action-buttons-right .btn { margin-left: 5px; margin-bottom: 5px;} /* Spacing for right buttons */
+    .action-buttons-right .search-container { margin-left: 5px; margin-bottom: 5px; flex-grow: 1; } /* Search takes remaining space */
+
+    /* === Tabla Principal === */
+    .table-responsive {
+      overflow-x: auto;
+      width: 100%;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: var(--white-color);
+      margin-bottom: 20px;
+      font-size: 0.9em; /* Slightly smaller text in table */
+    }
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 0.6rem 0.7rem; /* More padding */
+      text-align: left;
+      vertical-align: middle; /* Align vertically */
+    }
+    th {
+      background-color: var(--light-color);
+      color: var(--dark-color);
+      font-weight: 600;
+      white-space: nowrap; /* Prevent header wrapping */
+    }
+    th[data-sort] { /* Only make sortable headers clickable */
+         cursor: pointer;
+    }
+    th .sort-icon {
+      margin-left: 5px;
+      color: var(--secondary-color);
+      opacity: 0.5;
+      transition: opacity 0.2s;
+      display: inline-block; /* Ensure it takes space */
+      width: 1em; /* Prevent layout shifts */
+    }
+    th[data-sort]:hover .sort-icon {
+      opacity: 1;
+    }
+    th .sort-icon.active {
+        opacity: 1;
+        color: var(--primary-color);
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    tr:hover {
+      background-color: #e9ecef; /* More noticeable hover */
+    }
+    /* Space between buttons in cells - Adjusted for new buttons */
+    td .btn, td button {
+      margin-right: 3px;
+      margin-bottom: 3px;
+      margin-top: 2px; /* Add some top margin for stacked buttons */
+    }
+    td .btn-icon { /* Make icon buttons slightly more compact */
+        padding: 0.3rem 0.5rem;
+    }
+
+    .vehicle-details-link {
+      color: var(--primary-color);
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .vehicle-details-link:hover {
+      text-decoration: underline;
+    }
+    /* Verification Cell Highlighting */
+    td.verif-overdue { background-color: var(--verif-overdue-bg); color: var(--verif-overdue-text); font-weight: 500;}
+    td.verif-due { background-color: var(--verif-due-bg); color: var(--verif-due-text); font-weight: 500;} /* Yellow */
+    td.verif-ok { background-color: var(--verif-ok-bg); color: var(--verif-ok-text); } /* Green - Verified */
+    td.verif-future { background-color: var(--verif-future-bg); color: var(--verif-future-text); } /* Future, no highlight */
+    td.verif-nodate, td.verif-invalid, td.verif-error { /* Optional: subtle style for N/A */
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    .verification-cell { /* Container for text and button */
+        display: flex;
+        flex-direction: column; /* Stack text and button */
+        gap: 4px; /* Space between text and button */
+        align-items: flex-start; /* Align button to the left */
+    }
+    .verification-cell .btn-sm {
+        align-self: flex-start; /* Ensure button doesn't stretch */
+    }
+
+    /* === Badges de Estado/Alerta === */
+    .badge {
+      display: inline-block;
+      padding: 0.3em 0.6em;
+      font-size: 75%;
+      font-weight: 700;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: var(--border-radius);
+    }
+    .badge-warning { color: #212529; background-color: var(--warning-color); }
+    .badge-danger { color: var(--white-color); background-color: var(--danger-color); }
+    .badge-success { color: var(--white-color); background-color: var(--success-color); }
+    .badge-info { color: var(--white-color); background-color: var(--info-color); }
+    .badge-secondary { color: var(--white-color); background-color: var(--secondary-color); }
+
+    /* === Modales === */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none; /* Initially hidden */
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+      opacity: 0; /* Start invisible for transition */
+      transition: opacity 0.3s ease-in-out;
+    }
+    .modal-overlay.active {
+      /* display: flex; -- Handled by openModal JS */
+      opacity: 1;
+    }
+    .modal {
+      background: var(--white-color);
+      padding: 0; /* Padding will be in header/body/footer */
+      border-radius: var(--border-radius);
+      width: 90%;
+      max-width: 700px; /* Max width for larger modals */
+      max-height: 90vh;
+      overflow: hidden; /* Prevent content spilling */
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--box-shadow-lg);
+      transform: scale(0.95); /* Start slightly small */
+      transition: transform 0.3s ease-in-out;
+    }
+    .modal-overlay.active .modal {
+        transform: scale(1);
+    }
+    .modal-header {
+      padding: 1rem 1.5rem;
+      background-color: var(--light-color);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.4rem;
+      color: var(--primary-color);
+      text-align: left;
+    }
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto; /* Scrollable content */
+      flex-grow: 1;
+    }
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      background-color: var(--light-color);
+      border-top: 1px solid var(--border-color);
+      text-align: right;
+    }
+    .modal-footer button {
+        margin-left: 0.5rem;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--secondary-color);
+      cursor: pointer;
+      padding: 0 0.5rem;
+      line-height: 1;
+    }
+    .close-btn:hover {
+      color: var(--dark-color);
+    }
+
+    /* === Formularios === */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      font-size: 0.95em;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group input[type="date"],
+    .form-group input[type="file"],
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.5rem 0.7rem;
+      font-size: var(--base-font-size);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+      outline: none;
+    }
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .form-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    .form-group .form-text {
+      font-size: 0.85em;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    .input-group {
+        display: flex;
+        align-items: center;
+    }
+    .input-group input {
+        flex-grow: 1;
+    }
+    .input-group .btn {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+
+    /* === Tablas dentro de Modales === */
+    .sub-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+      font-size: 0.9em;
+    }
+    .sub-table th, .sub-table td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: left;
+      vertical-align: middle;
+    }
+    .sub-table th {
+      background-color: #f2f2f2;
+    }
+    .sub-table td button {
+        margin: 0 2px; /* Reset margin for tiny buttons */
+    }
+    .sub-table .btn-icon { /* Ensure icon buttons in sub-tables are compact */
+       padding: 0.3rem 0.5rem;
+    }
+
+    /* === Secciones Específicas === */
+    #statesContainer .state-block { /* Use #statesContainer for specificity */
+        margin-bottom: 15px;
+        padding: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background-color: #fdfdfd; /* Slightly off-white */
+    }
+     #statesContainer .state-header { /* Use #statesContainer for specificity */
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center; /* Align icon vertically */
+     }
+     /* Style for state name input */
+     #statesContainer .state-header input[type="text"] {
+         font-weight: bold;
+         border: none;
+         border-bottom: 1px dashed #ccc;
+         flex-grow: 1;
+         margin-right: 10px;
+         font-size: 1.1em;
+         padding: 2px 0; /* Minimal padding */
+     }
+     #statesContainer .state-header input[type="text"]:focus {
+         outline: none;
+         border-bottom: 1px solid var(--primary-color);
+     }
+
+     #statesContainer .link-list { /* Target the UL specifically */
+        list-style: none;
+        padding: 0;
+        margin-top: 10px;
+     }
+     #statesContainer .link-item { /* Use #statesContainer for specificity */
+        display: flex;
+        gap: 8px; /* Increased gap */
+        align-items: center; /* Align inputs and buttons */
+        padding: 8px 0; /* Add padding for separation */
+        border-bottom: 1px dashed var(--border-color); /* Add separator */
+     }
+     #statesContainer .link-list li:last-child { /* Target last link item */
+        border-bottom: none; /* Remove border from last item */
+     }
+     #statesContainer .link-item input { /* Use #statesContainer for specificity */
+         padding: 4px 6px; /* Slightly more padding */
+         font-size: 0.9em;
+         flex: 1 1 auto; /* Allow input to grow/shrink */
+         min-width: 100px; /* Minimum width */
+         border: 1px solid var(--border-color); /* Ensure border */
+         border-radius: var(--border-radius);
+     }
+     #statesContainer .link-item .btn { /* Use #statesContainer for specificity */
+         flex-shrink: 0; /* Prevent buttons from shrinking */
+     }
+
+     #licensesTable td, #licensesTable th {
+         vertical-align: middle;
+     }
+     #licensesTableBody input[type="text"] { /* Style input inside license table */
+        padding: 4px 6px; /* Consistent padding */
+        font-size: 0.9em;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        width: 100%; /* Make input fill cell */
+        box-sizing: border-box; /* Include padding in width */
+     }
+     /* Additional Docs Modal Table */
+     #additionalDocsTableBody td .btn {
+         margin: 0 2px; /* Consistent spacing for actions */
+     }
+
+
+    /* === Notificaciones === */
+    #notificationArea {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        min-width: 250px;
+        max-width: 400px; /* Optional max width */
+    }
+    .toast {
+        background-color: rgba(52, 58, 64, 0.9); /* Dark background */
+        color: var(--white-color);
+        padding: 10px 15px;
+        border-radius: var(--border-radius);
+        margin-bottom: 10px;
+        box-shadow: var(--box-shadow-lg);
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        transform: translateX(100%); /* Start off screen */
+        pointer-events: none; /* Prevent interaction while hidden/fading */
+    }
+    .toast.show {
+        opacity: 1;
+        transform: translateX(0); /* Slide in */
+        pointer-events: auto; /* Allow interaction when shown */
+    }
+    .toast.success { background-color: rgba(40, 167, 69, 0.9); }
+    .toast.error { background-color: rgba(220, 53, 69, 0.9); }
+    .toast.info { background-color: rgba(23, 162, 184, 0.9); } /* Added info style */
+    .toast.warning { background-color: rgba(255, 193, 7, 0.9); color: #212529;} /* Added warning style */
+
+
+    /* === Helper Classes === */
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .d-flex { display: flex; }
+    .justify-content-between { justify-content: space-between; }
+    .align-items-center { align-items: center; }
+    .mb-0 { margin-bottom: 0 !important; }
+    .mt-1 { margin-top: 0.5rem !important; }
+    .mb-1 { margin-bottom: 0.5rem !important; }
+    .mb-2 { margin-bottom: 1rem !important; }
+    .mt-2 { margin-top: 1rem !important; }
+
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        body { padding: 10px; }
+        .container { padding: 15px; margin: 10px auto; }
+        .action-bar { flex-direction: column; align-items: stretch; }
+        .action-buttons-left { order: 1; width: 100%; text-align: center; margin-bottom: 10px; }
+        .action-buttons-right { order: 2; width: 100%; justify-content: center; }
+        .action-buttons-left button, .action-buttons-left .btn, .action-buttons-right button, .action-buttons-right .btn { margin: 3px;}
+        .search-container { width: 100%; margin-bottom: 10px; } /* Search takes full width */
+        .search-bar input[type="text"] { min-width: 0; width: 100%; }
+        .search-suggestions-list { width: 100%; /* Make suggestions full width */ }
+
+        .modal { max-width: 95%; }
+        th, td { padding: 0.4rem 0.5rem; font-size: 0.85em; } /* Reduce padding & font on small screens */
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.3rem; }
+        .btn { padding: 0.4rem 0.7rem; font-size: 0.9em;} /* Adjust button size */
+        .btn-sm { padding: 0.2rem 0.4rem; font-size: 0.75em; }
+        .btn-icon { padding: 0.3rem 0.5rem; }
+        .modal-body { padding: 1rem; }
+        .modal-header, .modal-footer { padding: 0.8rem 1rem; }
+        /* Adjust state/link modal inputs on small screens */
+        #statesContainer .link-item { flex-direction: column; align-items: stretch; }
+        #statesContainer .link-item input { min-width: 100%; }
+        #statesContainer .link-item .btn { margin-top: 5px; width: auto; } /* Align buttons */
+        #statesContainer .link-item a.btn { align-self: flex-start;}
+        /* Adjust additional docs modal form on small screens */
+        #addDocForm { flex-direction: column; align-items: stretch; }
+        #addDocForm .form-group { flex-basis: auto !important; }
+        #addDocForm button { margin-top: 10px; }
+        /* Adjust verification cell on small screens */
+        .verification-cell {
+            align-items: stretch; /* Make button full width */
+        }
+        .verification-cell .btn-sm {
+             align-self: stretch;
+             text-align: center;
+        }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1><i class="fas fa-car"></i> LEFIOS CARS - Gestión de Flotilla</h1>
+
+    <!-- Notification Area -->
+    <div id="notificationArea"></div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div class="action-buttons-left">
+            <button class="btn btn-warning" onclick="showProximosTramitesModal()">
+                <i class="fas fa-calendar-alt"></i> Próximos Trámites
+            </button>
+             <button class="btn btn-danger" onclick="printConsolidatedReport()">
+                <i class="fas fa-exclamation-triangle"></i> Reporte Vencimientos
+            </button>
+            <button class="btn btn-secondary" onclick="openStatesLinksModal()">
+                <i class="fas fa-map-marked-alt"></i> Estados y Ligas
+            </button>
+            <button class="btn btn-secondary" onclick="openLicensesModal()">
+                <i class="fas fa-id-card"></i> Licencias Conductores
+            </button>
+             <button class="btn btn-success" onclick="saveAll()">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>
+        <div class="action-buttons-right">
+             <button class="btn btn-info" onclick="openImportModal()">
+                <i class="fas fa-file-upload"></i> Importar Layout (CSV)
+            </button>
+            <button class="btn btn-info" onclick="exportData()">
+                <i class="fas fa-file-download"></i> Exportar Layout (CSV)
+            </button>
+             <!-- Search Container -->
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Buscar Marca/Modelo o Placas..." oninput="debouncedHandleSearchInput()" autocomplete="off" />
+                    <button class="btn btn-light btn-icon" onclick="clearSearch()" title="Limpiar búsqueda">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <!-- Suggestions Dropdown -->
+                <div id="searchSuggestions" class="search-suggestions-list"></div>
+            </div>
+            <button class="btn btn-primary" onclick="openAddVehicleModal()">
+                <i class="fas fa-plus"></i> Agregar Vehículo
+            </button>
+        </div>
+    </div>
+
+    <!-- Vehicle Table Section -->
+    <div class="section">
+       <div class="section-header">
+           <h2><i class="fas fa-list-ul"></i> Listado de Vehículos</h2>
+       </div>
+       <div class="table-responsive">
+            <table id="vehicleTable">
+                <thead>
+                <tr>
+                    <th data-sort="marcaModelo">Marca/Modelo <span class="sort-icon fas fa-sort"></span></th>
+                    <th data-sort="placas">Placas <span class="sort-icon fas fa-sort"></span></th>
+                    <th data-sort="proximoMantenimiento">Próx. Manto. <span class="sort-icon fas fa-sort"></span></th>
+                    <th>Próx. Verif.</th> <!-- Sorting complicated by status -->
+                    <th data-sort="cambioPlacas">Cambio Placas <span class="sort-icon fas fa-sort"></span></th>
+                    <th data-sort="vencimientoSeguro">Venc. Seguro <span class="sort-icon fas fa-sort"></span></th>
+                    <th data-sort="refrendoAnioPagado">Refrendo <span class="sort-icon fas fa-sort"></span></th>
+                    <th>Docs</th>
+                    <th>Historial</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="vehicleTableBody">
+                <!-- Rows will be generated by JavaScript -->
+                </tbody>
+            </table>
+       </div>
+    </div>
+
+  </div> <!-- End Container -->
+
+  <!-- === MODALES === -->
+
+  <!-- MODAL: AGREGAR / EDITAR VEHÍCULO -->
+  <div class="modal-overlay" id="vehicleModalOverlay">
+    <div class="modal" id="vehicleModal">
+      <div class="modal-header">
+        <h2 id="vehicleModalTitle">Agregar Vehículo</h2>
+        <button class="close-btn" onclick="closeModal('vehicleModalOverlay')" title="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editVehicleIndex"> <!-- Hidden field for edit index -->
+        <div class="row" style="display: flex; gap: 15px; flex-wrap: wrap;">
+          <div style="flex: 1 1 48%; min-width: 250px;">
+              <div class="form-group">
+                <label for="vehicleMarcaModelo">Marca/Modelo (Obligatorio):</label>
+                <input type="text" id="vehicleMarcaModelo" required />
+              </div>
+              <div class="form-group">
+                <label for="vehicleModelo">Modelo (Específico):</label>
+                <input type="text" id="vehicleModelo" placeholder="Ej: Spark, Sentra" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleAnio">Año:</label>
+                <input type="number" id="vehicleAnio" placeholder="Ej: 2023" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleColor">Color:</label>
+                <input type="text" id="vehicleColor" />
+              </div>
+              <div class="form-group">
+                <label for="vehiclePlacas">Placas (máx 10):</label>
+                <input type="text" id="vehiclePlacas" maxlength="10" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleNumSerie">Número de Serie:</label>
+                <input type="text" id="vehicleNumSerie" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleFechaAdq">Fecha de Adquisición:</label>
+                <input type="date" id="vehicleFechaAdq" />
+              </div>
+               <div class="form-group">
+                <label for="vehicleKilometraje">Kilometraje Actual:</label>
+                <input type="text" id="vehicleKilometraje" placeholder="Ej: 150000" />
+                 <small class="form-text">Solo número si es posible, o '150,000 km'.</small>
+              </div>
+          </div>
+          <div style="flex: 1 1 48%; min-width: 250px;">
+              <div class="form-group">
+                <label for="vehicleMantenimiento">Próximo Mantenimiento (Fecha):</label>
+                <input type="date" id="vehicleMantenimiento" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleCambioPlacas">Próximo Cambio Placas (Fecha):</label>
+                <input type="date" id="vehicleCambioPlacas" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleVencSeguro">Vencimiento Seguro (Fecha):</label>
+                <input type="date" id="vehicleVencSeguro" />
+              </div>
+               <!-- NEW: Last Verification Date (Readonly here, set via table button) -->
+               <div class="form-group">
+                 <label for="vehicleLastVerification">Última Verificación Realizada:</label>
+                 <input type="date" id="vehicleLastVerification" readonly disabled />
+                 <small class="form-text">Se actualiza con el botón <i class="fas fa-check-circle"></i> Marcar Verif.</small>
+               </div>
+              <div class="form-group">
+                <label for="vehicleAseguradora">Aseguradora:</label>
+                <input type="text" id="vehicleAseguradora" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleTelefono">Teléfono Contacto Seguro:</label>
+                <input type="text" id="vehicleTelefono" placeholder="Ej: 55-1234-5678" />
+              </div>
+              <div class="form-group">
+                <label for="vehicleRefrendoAnio">Año Último Refrendo Pagado:</label>
+                <input type="number" id="vehicleRefrendoAnio" placeholder="Ej: 2024" min="1900" max="2100" />
+              </div>
+               <div class="form-group">
+                <label for="vehicleObservaciones">Observaciones Generales:</label>
+                <textarea id="vehicleObservaciones" rows="2"></textarea> <!-- Reduced rows slightly -->
+              </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('vehicleModalOverlay')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveVehicle()">
+            <i class="fas fa-save"></i> Guardar Vehículo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FALLAS -->
+  <div class="modal-overlay" id="faultsModalOverlay">
+      <div class="modal">
+        <div class="modal-header">
+            <h2 id="faultsModalTitle">Fallas del Vehículo</h2>
+            <button class="close-btn" onclick="closeModal('faultsModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="faultsVehicleInfo" class="mb-1"><strong>Vehículo:</strong> <span id="faultsVehicleName"></span></p>
+
+            <div class="section-header" style="border: none; padding: 0; margin-bottom: 10px;">
+                <h3>Registrar Nueva Falla</h3>
+            </div>
+             <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+                  <label for="newFaultDate">Fecha:</label>
+                  <input type="date" id="newFaultDate" />
+                </div>
+                <div class="form-group" style="flex: 3 1 300px; margin-bottom: 0;">
+                  <label for="newFaultDesc">Descripción (Obligatorio):</label>
+                  <textarea id="newFaultDesc" rows="1" placeholder="Ej: Chirrido al frenar" required></textarea>
+                </div>
+                <div style="margin-bottom: 0;"> <!-- Adjusted alignment -->
+                     <button class="btn btn-success btn-sm" onclick="addFault()">
+                         <i class="fas fa-plus"></i> Agregar
+                     </button>
+                </div>
+             </div>
+
+             <div class="section-header" style="border: none; padding: 0; margin-bottom: 10px; margin-top: 20px;">
+                <h3>Historial de Fallas</h3>
+             </div>
+             <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table class="sub-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Descripción</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="faultsTableBody"></tbody>
+                </table>
+             </div>
+        </div>
+        <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('faultsModalOverlay')">Cerrar</button>
+             <button class="btn btn-info" onclick="printFaults()">
+                 <i class="fas fa-print"></i> Imprimir Fallas
+             </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: MANTENIMIENTOS -->
+    <div class="modal-overlay" id="maintenanceModalOverlay">
+      <div class="modal">
+        <div class="modal-header">
+            <h2 id="maintenanceModalTitle">Historial de Mantenimientos</h2>
+            <button class="close-btn" onclick="closeModal('maintenanceModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="maintenanceVehicleInfo" class="mb-1"><strong>Vehículo:</strong> <span id="maintenanceVehicleName"></span></p>
+
+             <div class="section-header" style="border: none; padding: 0; margin-bottom: 10px;">
+                <h3>Registrar Nuevo Mantenimiento</h3>
+            </div>
+             <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+                    <label for="newMaintenanceDate">Fecha (Obligatorio):</label>
+                    <input type="date" id="newMaintenanceDate" required/>
+                </div>
+                 <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+                    <label for="newMaintenanceKm">Kilometraje (Obligatorio):</label>
+                    <input type="text" id="newMaintenanceKm" placeholder="Ej: 152000" required/>
+                 </div>
+                 <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
+                    <label for="newMaintenanceNextChange">Próximo Manto (Opcional):</label>
+                    <input type="date" id="newMaintenanceNextChange" />
+                 </div>
+                 <div style="margin-bottom: 0;"> <!-- Adjusted alignment -->
+                     <button class="btn btn-success btn-sm" onclick="addMaintenance()">
+                         <i class="fas fa-plus"></i> Agregar
+                     </button>
+                 </div>
+             </div>
+
+             <div class="section-header" style="border: none; padding: 0; margin-bottom: 10px; margin-top: 20px;">
+                <h3>Historial Registrado</h3>
+             </div>
+             <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table class="sub-table">
+                    <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Kilometraje</th>
+                        <th>Próximo Manto</th>
+                        <th>Acción</th>
+                    </tr>
+                    </thead>
+                    <tbody id="maintenanceTableBody"></tbody>
+                </table>
+             </div>
+        </div>
+        <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('maintenanceModalOverlay')">Cerrar</button>
+             <button class="btn btn-info" onclick="printMaintenance()">
+                 <i class="fas fa-print"></i> Imprimir Mantenimientos
+             </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: DOCUMENTOS VEHÍCULO (PÓLIZA, TARJETA) -->
+    <div class="modal-overlay" id="vehicleDocModalOverlay">
+      <div class="modal" id="vehicleDocModal" style="max-width: 550px;">
+        <div class="modal-header">
+            <h2 id="vehicleDocModalTitle">Documento</h2>
+            <button class="close-btn" onclick="closeModal('vehicleDocModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="vehicleDocInfo" class="mb-1"><strong>Vehículo:</strong> <span id="vehicleDocName"></span></p>
+            <hr class="mb-1">
+            <div id="vehicleDocActions" class="mb-1">
+                <!-- View/Download button will be added here -->
+            </div>
+            <div class="form-group">
+                <label for="vehicleDocFileInput">Subir Nuevo/Reemplazar (PDF/JPG/PNG):</label>
+                <input type="file" id="vehicleDocFileInput" accept=".pdf,.png,.jpg,.jpeg" />
+            </div>
+        </div>
+         <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('vehicleDocModalOverlay')">Cerrar</button>
+             <button class="btn btn-primary" onclick="uploadVehicleDoc()">
+                 <i class="fas fa-upload"></i> Subir/Actualizar
+             </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: DOCUMENTOS ADICIONALES VEHÍCULO -->
+    <div class="modal-overlay" id="additionalDocsModalOverlay">
+      <div class="modal" id="additionalDocsModal" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2 id="additionalDocsModalTitle">Documentos Adicionales</h2>
+            <button class="close-btn" onclick="closeModal('additionalDocsModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="additionalDocsVehicleInfo" class="mb-1"><strong>Vehículo:</strong> <span id="additionalDocsVehicleName"></span></p>
+            <hr class="mb-2">
+
+            <!-- Formulario para agregar nuevo documento -->
+            <h3>Agregar Nuevo Documento</h3>
+            <div id="addDocForm" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="flex: 1 1 200px; margin-bottom: 0;">
+                    <label for="newDocName">Nombre Documento (Obligatorio):</label>
+                    <input type="text" id="newDocName" placeholder="Ej: Factura, Multa" required />
+                </div>
+                <div class="form-group" style="flex: 2 1 300px; margin-bottom: 0;">
+                    <label for="newDocFile">Archivo (PDF/JPG/PNG, Obligatorio):</label>
+                    <input type="file" id="newDocFile" accept=".pdf,.png,.jpg,.jpeg" required />
+                </div>
+                <div style="margin-bottom: 0;">
+                    <button class="btn btn-success btn-sm" onclick="addAdditionalDoc()">
+                        <i class="fas fa-plus"></i> Agregar Documento
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de documentos existentes -->
+            <h3 class="mt-2">Documentos Cargados</h3>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="sub-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Archivo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="additionalDocsTableBody">
+                        <!-- Rows generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('additionalDocsModalOverlay')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- MODAL: PRÓXIMOS TRÁMITES -->
+    <div class="modal-overlay" id="tramitesModalOverlay">
+      <div class="modal" id="tramitesModal">
+        <div class="modal-header">
+            <h2><i class="fas fa-calendar-check"></i> Próximos Trámites (Siguientes 60 días)</h2>
+            <button class="close-btn" onclick="closeModal('tramitesModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="tramitesContent" style="max-height: 60vh; overflow-y: auto;">
+                <!-- Content generated by JS -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('tramitesModalOverlay')">Cerrar</button>
+            <button class="btn btn-info" onclick="printTramites()">
+                <i class="fas fa-print"></i> Imprimir Lista
+            </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ESTADOS Y LIGAS -->
+    <div class="modal-overlay" id="statesLinksModalOverlay">
+      <div class="modal" id="statesLinksModal" style="max-width: 800px;">
+        <div class="modal-header">
+            <h2><i class="fas fa-map-marked-alt"></i> Administrar Estados y Ligas de Trámites</h2>
+            <button class="close-btn" onclick="closeModal('statesLinksModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Administra los estados y las URLs útiles para trámites (verificación, refrendos, etc.).</p>
+            <button class="btn btn-success btn-sm mb-1" onclick="addState()">
+                <i class="fas fa-plus"></i> Agregar Estado
+            </button>
+            <div id="statesContainer" style="max-height: 50vh; overflow-y: auto;">
+                <!-- States and links generated by JS -->
+            </div>
+        </div>
+         <div class="modal-footer">
+             <!-- Removed save button as changes save instantly -->
+            <button class="btn btn-primary" onclick="closeModal('statesLinksModalOverlay')">
+                 <i class="fas fa-check"></i> Hecho
+            </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: LICENCIAS DE CONDUCTORES -->
+    <div class="modal-overlay" id="licensesModalOverlay">
+      <div class="modal" id="licensesModal" style="max-width: 700px;"> <!-- Increased width slightly -->
+        <div class="modal-header">
+            <h2><i class="fas fa-id-card"></i> Licencias de Conducir</h2>
+            <button class="close-btn" onclick="closeModal('licensesModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+             <p>Administra los conductores y sus licencias (no asociadas a un vehículo específico).</p>
+            <button class="btn btn-success btn-sm mb-1" onclick="addPerson()">
+                <i class="fas fa-user-plus"></i> Agregar Conductor
+            </button>
+             <div class="table-responsive" style="max-height: 50vh; overflow-y: auto;">
+                <table class="sub-table" id="licensesTable">
+                    <thead>
+                    <tr>
+                        <th>Nombre Conductor</th>
+                        <th class="text-center">Licencia</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody id="licensesTableBody">
+                        <!-- Driver rows generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+             <!-- Removed save button as changes save instantly -->
+            <button class="btn btn-primary" onclick="closeModal('licensesModalOverlay')">
+                 <i class="fas fa-check"></i> Hecho
+            </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: DOCUMENTO LICENCIA -->
+    <div class="modal-overlay" id="licenseDocModalOverlay">
+      <div class="modal" id="licenseDocModal" style="max-width: 550px;">
+        <div class="modal-header">
+            <h2 id="licenseDocModalTitle">Licencia de Conducir</h2>
+            <button class="close-btn" onclick="closeModal('licenseDocModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="licenseDocInfo" class="mb-1"><strong>Conductor:</strong> <span id="licenseDocName"></span></p>
+            <hr class="mb-1">
+            <div id="licenseDocActions" class="mb-1">
+                <!-- View/Download button will be added here -->
+            </div>
+            <div class="form-group">
+                <label for="licenseDocFileInput">Subir Nuevo/Reemplazar (PDF/JPG/PNG):</label>
+                <input type="file" id="licenseDocFileInput" accept=".pdf,.png,.jpg,.jpeg" />
+            </div>
+        </div>
+         <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('licenseDocModalOverlay')">Cerrar</button>
+             <button class="btn btn-primary" onclick="uploadLicenseDoc()">
+                 <i class="fas fa-upload"></i> Subir/Actualizar Licencia
+             </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: IMPORTAR LAYOUT (CSV) -->
+    <div class="modal-overlay" id="importModalOverlay">
+      <div class="modal" id="importModal" style="max-width: 650px;"> <!-- Wider for better result display -->
+        <div class="modal-header">
+            <h2><i class="fas fa-file-upload"></i> Importar Vehículos desde CSV</h2>
+            <button class="close-btn" onclick="closeModal('importModalOverlay')" title="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Selecciona un archivo CSV (codificado en UTF-8) para agregar vehículos.</p>
+            <p>Columnas requeridas (en orden):<br>
+               <code>MarcaModelo, Modelo, Año, Color, Placas, NumeroSerie, FechaAdquisicion, Kilometraje, ProximoMantenimiento, CambioPlacas, VencimientoSeguro, Aseguradora, TelefonoSeguro, RefrendoAnioPagado, Observaciones, LastVerificationDate</code>
+               <br><small>Solo <strong>MarcaModelo</strong> es obligatorio. Las fechas deben ser YYYY-MM-DD. La primera fila debe ser el encabezado (será verificado pero ignorado para datos).</small>
+            </p>
+            <div class="form-group">
+                <label for="importFile">Archivo CSV:</label>
+                <input type="file" id="importFile" accept=".csv" required />
+            </div>
+             <div id="importResult" class="mt-1" style="font-size: 0.9em; max-height: 150px; overflow-y: auto; background-color: #f8f9fa; border: 1px solid #eee; padding: 10px; border-radius: var(--border-radius);">
+                <!-- Import results/errors shown here -->
+             </div>
+        </div>
+         <div class="modal-footer">
+             <button class="btn btn-secondary" onclick="closeModal('importModalOverlay')">Cancelar</button>
+             <button class="btn btn-primary" onclick="handleImport()">
+                 <i class="fas fa-check"></i> Importar
+             </button>
+        </div>
+      </div>
+    </div>
+
+
+  <script>
+    /* ========================================================================== */
+    /*  1. DATA STRUCTURES & INITIALIZATION                                     */
+    /* ========================================================================== */
+    const initialVehicles = [
+      {
+        id: 1700000000001, // Example unique ID
+        marcaModelo: "Chevy Spark",
+        modelo: "Spark LT",
+        color: "Rojo",
+        placas: "ABC-123A", // Example valid plate, ends in 3 -> Mar-Abr / Sep-Oct
+        año: 2010,
+        numeroSerie: "ABC123SERIE01",
+        fechaAdquisicion: "2010-03-01",
+        kilometraje: "150000",
+        proximoMantenimiento: "2025-06-01",
+        cambioPlacas: "2025-03-01",
+        vencimientoSeguro: "2024-07-15", // Example date near expiry
+        observaciones: "Revisar frenos en el siguiente servicio",
+        aseguradora: "AXA",
+        telefono: "55-1234-5678",
+        refrendoAnioPagado: 2024,
+        lastVerificationDate: null, // Not verified this year yet
+        fallas: [ { id: 1700000001001, fechaFalla: '2024-05-10', descripcion: 'Ruido extraño al arrancar' } ],
+        mantenimientos: [ { id: 1700000002001, fechaManto: '2024-01-15', kilometraje: '145000', proximoCambio: '2024-07-15'} ],
+        polizaBase64: "",
+        tarjetaCirculacionBase64: "",
+        additionalDocuments: []
+      },
+      {
+        id: 1700000000002,
+        marcaModelo: "Nissan Versa",
+        modelo: "Advance",
+        color: "Gris Oxford",
+        placas: "XYZ-789B", // Ends in 9 -> May-Jun / Nov-Dic
+        año: 2019,
+        numeroSerie: "XYZ987SERIE02",
+        fechaAdquisicion: "2019-08-20",
+        kilometraje: "65000",
+        proximoMantenimiento: "2024-08-01",
+        cambioPlacas: null,
+        vencimientoSeguro: "2025-01-10",
+        observaciones: "",
+        aseguradora: "Qualitas",
+        telefono: "55-9876-5432",
+        refrendoAnioPagado: 2024,
+        lastVerificationDate: "2024-05-15", // Example: Verified in May (current period)
+        fallas: [],
+        mantenimientos: [ { id: 1700000002002, fechaManto: '2024-02-01', kilometraje: '60000', proximoCambio: '2024-08-01'} ],
+        polizaBase64: "",
+        tarjetaCirculacionBase64: "",
+        additionalDocuments: [ // Example with an additional document
+             { id: 1700000006001, name: "Factura Original", fileName: "factura_XYZ789B.pdf", base64Data: "" /* Store base64 here */ }
+        ]
+      },
+       { // Vehicle with no plates example
+        id: 1700000000003,
+        marcaModelo: "VW Jetta",
+        modelo: "Clasico",
+        color: "Blanco",
+        placas: "", // NO PLATES
+        año: 2015,
+        numeroSerie: "VWJETTA15SERIE03",
+        fechaAdquisicion: "2015-11-10",
+        kilometraje: "95000",
+        proximoMantenimiento: "2024-11-01",
+        cambioPlacas: null,
+        vencimientoSeguro: "2024-12-01",
+        observaciones: "Pendiente asignar placas.",
+        aseguradora: "GNP",
+        telefono: "",
+        refrendoAnioPagado: 2024,
+        lastVerificationDate: null, // NEW FIELD
+        fallas: [],
+        mantenimientos: [],
+        polizaBase64: "",
+        tarjetaCirculacionBase64: "",
+        additionalDocuments: []
+      }
+    ];
+
+    let initialStates = [
+      {
+        id: 1700000003001, stateName: "CDMX",
+        links: [ { id: 1700000004001, label: "Verificación", url: "http://citasverificentros.cdmx.gob.mx" } ]
+      },
+      {
+        id: 1700000003002, stateName: "Edomex",
+        links: [
+          { id: 1700000004002, label: "Verificación", url: "https://sram.edomex.gob.mx/verificacion_vehicular" },
+          { id: 1700000004003, label: "Refrendos", url: "https://sfpya.edomexico.gob.mx/recaudacion/" }
+        ]
+      }
+    ];
+
+    let initialLicenses = [
+      { id: 1700000005001, personName: "Jacobo", licenseBase64: "" },
+      { id: 1700000005002, personName: "Alejandra", licenseBase64: "" },
+      { id: 1700000005003, personName: "Fernanda", licenseBase64: "" }
+    ];
+
+    // --- Load from LocalStorage or use Initial Data ---
+    let vehicles = [];
+    let statesData = [];
+    let peopleLicenses = [];
+    const STORAGE_KEYS = {
+        vehicles: "lefiocars_vehicles_v3", // Keep v3 as schema is compatible
+        states: "lefiocars_statesData_v1",
+        licenses: "lefiocars_peopleLicenses_v1"
+    };
+
+
+    // Wrap localStorage access in try-catch
+    try {
+        const storedVehicles = localStorage.getItem(STORAGE_KEYS.vehicles);
+        if (storedVehicles) {
+             vehicles = JSON.parse(storedVehicles);
+             // --- Data Migration Check (Ensure all fields exist) ---
+             let migrationNeeded = false;
+             vehicles.forEach(v => {
+                 if (v.lastVerificationDate === undefined) {
+                     v.lastVerificationDate = null; // Initialize as null
+                     migrationNeeded = true;
+                 }
+                 if (v.additionalDocuments === undefined) {
+                     v.additionalDocuments = [];
+                     migrationNeeded = true;
+                 }
+                 if (v.polizaBase64 === undefined) v.polizaBase64 = ""; // Ensure standard docs exist too
+                 if (v.tarjetaCirculacionBase64 === undefined) v.tarjetaCirculacionBase64 = "";
+             });
+             if (migrationNeeded) {
+                 console.log("Migrating old vehicle data: Ensuring all required fields exist.");
+                 showToast("Estructura de datos actualizada.", "info");
+                 // Re-save immediately after migration
+                 localStorage.setItem(STORAGE_KEYS.vehicles, JSON.stringify(vehicles));
+             }
+        } else {
+            vehicles = JSON.parse(JSON.stringify(initialVehicles)); // Deep copy initial if none stored
+        }
+    } catch (e) {
+        console.error("Error loading vehicles from localStorage:", e);
+        vehicles = JSON.parse(JSON.stringify(initialVehicles)); // Fallback
+        showToast("Error al cargar vehículos. Usando datos iniciales.", "error");
+    }
+     try {
+        const storedStates = localStorage.getItem(STORAGE_KEYS.states);
+        statesData = storedStates ? JSON.parse(storedStates) : JSON.parse(JSON.stringify(initialStates));
+    } catch (e) {
+        console.error("Error loading statesData from localStorage:", e);
+        statesData = JSON.parse(JSON.stringify(initialStates));
+        showToast("Error al cargar estados. Usando datos iniciales.", "error");
+    }
+    try {
+        const storedLicenses = localStorage.getItem(STORAGE_KEYS.licenses);
+        peopleLicenses = storedLicenses ? JSON.parse(storedLicenses) : JSON.parse(JSON.stringify(initialLicenses));
+    } catch (e) {
+        console.error("Error loading peopleLicenses from localStorage:", e);
+        peopleLicenses = JSON.parse(JSON.stringify(initialLicenses));
+        showToast("Error al cargar licencias. Usando datos iniciales.", "error");
+    }
+
+
+    // Global state for modal contexts
+    let currentVehicleIndex = null; // Index in the vehicles array for modals
+    let currentPersonIndex = null; // Index in the peopleLicenses array
+    let currentSortColumn = null;
+    let currentSortDirection = 'asc';
+    let currentDocField = null; // 'polizaBase64' or 'tarjetaCirculacionBase64'
+    let currentAdditionalDocId = null; // For managing additional docs
+
+
+    function saveToLocalStorage() {
+      try {
+          localStorage.setItem(STORAGE_KEYS.vehicles, JSON.stringify(vehicles));
+          localStorage.setItem(STORAGE_KEYS.states, JSON.stringify(statesData));
+          localStorage.setItem(STORAGE_KEYS.licenses, JSON.stringify(peopleLicenses));
+          console.log("Data saved to localStorage."); // Optional: for debugging
+      } catch (e) {
+          console.error("Error saving to localStorage:", e);
+          // Check for QuotaExceededError specifically
+          if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') { // Added Firefox error name
+                showToast("Error: Almacenamiento lleno. No se pudieron guardar cambios.", "error", 6000); // Longer duration
+          } else {
+                showToast("Error al guardar datos en almacenamiento local.", "error");
+          }
+      }
+    }
+
+    /* ========================================================================== */
+    /*  2. UTILITIES & HELPERS                                                    */
+    /* ========================================================================== */
+
+    // Simple Toast Notification
+    function showToast(message, type = 'info', duration = 3500) { // type: info, success, error, warning
+        const notificationArea = document.getElementById('notificationArea');
+        if (!notificationArea) {
+            console.warn("Notification area not found for toast:", message);
+            return; // Avoid error if element doesn't exist
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        notificationArea.appendChild(toast);
+
+        // Trigger reflow AFTER appending to enable transition
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                 toast.classList.add('show');
+            });
+        });
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            // Remove element after transition ends
+            toast.addEventListener('transitionend', () => {
+                 // Check if the toast is still a child before removing
+                 if (toast.parentNode === notificationArea) {
+                    notificationArea.removeChild(toast);
+                 }
+            }, { once: true }); // Ensure listener is removed after firing
+        }, duration); // Use provided duration
+    }
+
+    // Date comparison helper
+    function isWithinDays(dateString, days = 60) { // Check 60 days ahead by default
+      if (!dateString) return { isNear: false, daysDiff: Infinity, status: 'nodate' };
+      try {
+        // Try parsing with and without time to handle potential variations
+        let targetDate = new Date(dateString + 'T00:00:00'); // Assume date only if no time
+        if (isNaN(targetDate.getTime())) {
+            targetDate = new Date(dateString); // Try parsing as is
+        }
+
+        if (isNaN(targetDate.getTime())) {
+             console.warn("Invalid date string:", dateString);
+             return { isNear: false, daysDiff: Infinity, status: 'invalid' };
+        }
+        targetDate.setHours(0, 0, 0, 0); // Normalize target date
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today
+
+        const diffTime = targetDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+            return { isNear: true, daysDiff: diffDays, status: 'overdue' }; // Overdue
+        } else if (diffDays <= days) {
+            return { isNear: true, daysDiff: diffDays, status: 'due' }; // Due soon (includes today)
+        } else {
+            return { isNear: false, daysDiff: diffDays, status: 'future' }; // Not due soon
+        }
+      } catch (e) {
+          console.error("Error parsing date:", dateString, e);
+          return { isNear: false, daysDiff: Infinity, status: 'error' };
+      }
+    }
+
+
+    // Verification Calendar Logic
+    const verificationCalendar = [
+        { terminaciones: [5, 6], periodo1: "Ene-Feb", periodo2: "Jul-Ago", month1Start: 0, month1End: 1, month2Start: 6, month2End: 7 }, // Months are 0-indexed
+        { terminaciones: [7, 8], periodo1: "Feb-Mar", periodo2: "Ago-Sep", month1Start: 1, month1End: 2, month2Start: 7, month2End: 8 },
+        { terminaciones: [3, 4], periodo1: "Mar-Abr", periodo2: "Sep-Oct", month1Start: 2, month1End: 3, month2Start: 8, month2End: 9 },
+        { terminaciones: [1, 2], periodo1: "Abr-May", periodo2: "Oct-Nov", month1Start: 3, month1End: 4, month2Start: 9, month2End: 10 },
+        { terminaciones: [9, 0], periodo1: "May-Jun", periodo2: "Nov-Dic", month1Start: 4, month1End: 5, month2Start: 10, month2End: 11 }
+    ];
+
+    function getLastNumericDigit(placa) {
+      if (!placa || typeof placa !== 'string') return null;
+      const match = placa.match(/\d(?=\D*$)|(\d$)/);
+      return match ? parseInt(match[0], 10) : null;
+    }
+
+    // --- MODIFIED: getNextVerificationInfo (Added isInCurrentPeriod) ---
+    function getNextVerificationInfo(placas, lastVerificationDateStr) {
+      const defaultReturn = { text: "N/A", status: 'nodate', daysDiff: Infinity, isNear: false, periodText: null, periodYear: null, isInCurrentPeriod: false };
+      const lastDigit = getLastNumericDigit(placas);
+
+      if (lastDigit === null || placas === null || placas === "") {
+          return { ...defaultReturn, text: "N/A", status: 'nodate' };
+      }
+
+      const calendarEntry = verificationCalendar.find(item => item.terminaciones.includes(lastDigit));
+      if (!calendarEntry) return { ...defaultReturn, text: "Dígito Inválido", status: 'invalid' };
+
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      today.setHours(0, 0, 0, 0); // Normalize today
+
+      let currentPeriodStartDate, currentPeriodEndDate, currentPeriodText, currentPeriodYear;
+      let nextPeriodStartDate, nextPeriodEndDate; // Needed for future status
+
+      // Determine which period applies NOW
+      const period1StartDateThisYear = new Date(currentYear, calendarEntry.month1Start, 1);
+      const period1EndDateThisYear = new Date(currentYear, calendarEntry.month1End + 1, 0); // Last day of end month
+      const period2StartDateThisYear = new Date(currentYear, calendarEntry.month2Start, 1);
+      const period2EndDateThisYear = new Date(currentYear, calendarEntry.month2End + 1, 0); // Last day of end month
+      period1EndDateThisYear.setHours(23, 59, 59, 999); // Include full day
+      period2EndDateThisYear.setHours(23, 59, 59, 999); // Include full day
+
+      if (today <= period1EndDateThisYear) {
+          currentPeriodStartDate = period1StartDateThisYear;
+          currentPeriodEndDate = period1EndDateThisYear;
+          currentPeriodText = calendarEntry.periodo1;
+          currentPeriodYear = currentYear;
+          // Next is period 2 this year
+          nextPeriodStartDate = period2StartDateThisYear;
+          nextPeriodEndDate = period2EndDateThisYear;
+      } else if (today <= period2EndDateThisYear) {
+          currentPeriodStartDate = period2StartDateThisYear;
+          currentPeriodEndDate = period2EndDateThisYear;
+          currentPeriodText = calendarEntry.periodo2;
+          currentPeriodYear = currentYear;
+           // Next is period 1 next year
+          nextPeriodStartDate = new Date(currentYear + 1, calendarEntry.month1Start, 1);
+          nextPeriodEndDate = new Date(currentYear + 1, calendarEntry.month1End + 1, 0);
+          nextPeriodEndDate.setHours(23, 59, 59, 999);
+      } else {
+           // We are past period 2 this year, the 'current' relevant one is Period 1 next year
+           currentPeriodStartDate = new Date(currentYear + 1, calendarEntry.month1Start, 1);
+           currentPeriodEndDate = new Date(currentYear + 1, calendarEntry.month1End + 1, 0);
+           currentPeriodEndDate.setHours(23, 59, 59, 999);
+           currentPeriodText = calendarEntry.periodo1;
+           currentPeriodYear = currentYear + 1;
+            // Next after that is period 2 next year
+           nextPeriodStartDate = new Date(currentYear + 1, calendarEntry.month2Start, 1);
+           nextPeriodEndDate = new Date(currentYear + 1, calendarEntry.month2End + 1, 0);
+           nextPeriodEndDate.setHours(23, 59, 59, 999);
+      }
+      currentPeriodStartDate.setHours(0, 0, 0, 0);
+      nextPeriodStartDate.setHours(0,0,0,0);
+
+      // --- Check if today is within the current verification period months ---
+      // Rerun period calculation just for 'today' to determine if we are *in* a period window
+      let isInCurrentPeriodMonths = false;
+       if (today >= period1StartDateThisYear && today <= period1EndDateThisYear) {
+            isInCurrentPeriodMonths = true;
+       } else if (today >= period2StartDateThisYear && today <= period2EndDateThisYear) {
+            isInCurrentPeriodMonths = true;
+       }
+       // Note: This flag 'isInCurrentPeriodMonths' tells us if today's date falls within the months,
+       // separate from whether the 'currentPeriodEndDate' (the deadline) is near or past.
+
+      // --- Check if already verified for the *current applicable* period ---
+      let isVerifiedForCurrentPeriod = false;
+      if (lastVerificationDateStr) {
+          try {
+            let lastVerificationDate = new Date(lastVerificationDateStr + 'T00:00:00');
+            if (isNaN(lastVerificationDate.getTime())) lastVerificationDate = new Date(lastVerificationDateStr);
+            lastVerificationDate.setHours(0,0,0,0);
+
+            if (!isNaN(lastVerificationDate.getTime())) {
+                 // Check if verified within the determined *current* period (which might be next year's first period if we are late this year)
+                 if (lastVerificationDate >= currentPeriodStartDate && lastVerificationDate <= currentPeriodEndDate) {
+                     isVerifiedForCurrentPeriod = true;
+                 }
+            }
+          } catch(e){ console.error("Error parsing lastVerificationDate:", lastVerificationDateStr, e);}
+      }
+
+      // --- Determine Status and Text ---
+      if (isVerifiedForCurrentPeriod) {
+          return {
+              text: `Verificado ${currentPeriodText} ${currentPeriodYear}`, // (${lastVerificationDateStr}) - removed for brevity
+              status: 'completed', // Use 'completed' for styling
+              daysDiff: null,
+              isNear: false,
+              periodText: currentPeriodText,
+              periodYear: currentPeriodYear,
+              isInCurrentPeriod: false // Already done, not 'due'
+          };
+      }
+
+      // --- If not completed, calculate urgency based on the current period's END date ---
+      if (isNaN(currentPeriodEndDate.getTime())) {
+          console.error("Failed to create verification target end date:", currentPeriodYear, currentPeriodText);
+          return { ...defaultReturn, text: "Error Fecha", status: 'error' };
+      }
+
+      // Check proximity to the END date (using 30 days for visual warning urgency)
+      const { daysDiff, status: endDateStatus } = isWithinDays(currentPeriodEndDate.toISOString().split('T')[0], 30);
+
+      let displayText = `${currentPeriodText} ${currentPeriodYear}`;
+
+      // Combine status and isInCurrentPeriodMonths for final decision
+      let finalStatus = endDateStatus; // Start with end-date status ('overdue', 'due', 'future')
+
+      return {
+            text: displayText,
+            status: finalStatus, // 'overdue', 'due', 'future' based on end date
+            daysDiff: daysDiff,
+            isNear: (finalStatus === 'due' || finalStatus === 'overdue'), // Is the deadline near/past?
+            periodText: currentPeriodText,
+            periodYear: currentPeriodYear,
+            isInCurrentPeriod: isInCurrentPeriodMonths && !isVerifiedForCurrentPeriod // NEW: True if we are within the months AND not yet verified
+      };
+    }
+
+    // Debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // File Handling Utilities
+    function getFileExtension(filename) {
+        if (!filename || typeof filename !== 'string') return '';
+        return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+    }
+    function getMimeType(base64Data) {
+        const match = base64Data?.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
+        return match ? match[1] : 'application/octet-stream';
+    }
+     function getFileExtensionFromMime(mimeType) {
+        const mimeMap = {
+            'application/pdf': 'pdf','image/jpeg': 'jpg','image/jpg': 'jpg',
+            'image/png': 'png','image/gif': 'gif',
+            'application/msword': 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+        };
+        return mimeMap[mimeType.toLowerCase()] || 'bin';
+    }
+    function sanitizeFilename(name) {
+         return (name || "archivo").replace(/[\/\\?%*:|"<>]/g, '_');
+    }
+
+    // Date validation helper
+    function isValidDateString(dateString) {
+        if (!dateString) return false;
+        // Basic check for YYYY-MM-DD format
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return false;
+        const date = new Date(dateString + 'T00:00:00'); // Use specific time to avoid timezone issues
+        return !isNaN(date.getTime());
+    }
+
+    /* ========================================================================== */
+    /*  3. RENDERING & TABLE DISPLAY                                              */
+    /* ========================================================================== */
+
+    function renderTable() {
+        const tableBody = document.getElementById("vehicleTableBody");
+        if (!tableBody) { console.error("#vehicleTableBody not found!"); return; }
+        tableBody.innerHTML = "";
+
+        const searchInput = document.getElementById("searchInput");
+        const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+        let filteredVehicles = vehicles;
+        if (searchTerm) {
+            try {
+                // Exact match filter (useful when selecting from suggestions)
+                 const exactMatch = vehicles.find(v =>
+                    (v.marcaModelo?.toLowerCase() === searchTerm) ||
+                    (v.placas?.toLowerCase() === searchTerm) ||
+                    (`${v.marcaModelo?.toLowerCase()} (${v.placas?.toLowerCase()})` === searchTerm)
+                 );
+
+                 if (exactMatch) {
+                     filteredVehicles = [exactMatch];
+                 } else {
+                    // Standard contains filter if no exact match from suggestions was selected
+                     filteredVehicles = vehicles.filter(v =>
+                        (v.marcaModelo?.toLowerCase() || "").includes(searchTerm) ||
+                        (v.placas?.toLowerCase() || "").includes(searchTerm)
+                     );
+                 }
+            } catch (e) {
+                 console.error("Error during filtering:", e);
+                 showToast("Error al aplicar el filtro.", "error");
+                 filteredVehicles = vehicles;
+            }
+        }
+
+        // Apply Sorting
+        if (currentSortColumn) {
+             let vehiclesToSort = [...filteredVehicles];
+            vehiclesToSort.sort((a, b) => {
+                let valA = a[currentSortColumn];
+                let valB = b[currentSortColumn];
+                const isEmptyA = valA === null || valA === undefined || valA === "";
+                const isEmptyB = valB === null || valB === undefined || valB === "";
+
+                if (isEmptyA && isEmptyB) return 0;
+                if (isEmptyA) return currentSortDirection === 'asc' ? -1 : 1; // Blanks first on asc
+                if (isEmptyB) return currentSortDirection === 'asc' ? 1 : -1; // Blanks first on asc
+
+                let dateA = !isNaN(Date.parse(valA)) ? new Date(valA + 'T00:00:00') : null;
+                let dateB = !isNaN(Date.parse(valB)) ? new Date(valB + 'T00:00:00') : null;
+
+                 if (dateA && !isNaN(dateA.getTime()) && dateB && !isNaN(dateB.getTime())) {
+                     if (dateA < dateB) return currentSortDirection === 'asc' ? -1 : 1;
+                     if (dateA > dateB) return currentSortDirection === 'asc' ? 1 : -1;
+                     return 0;
+                 }
+                 const numA = parseFloat(valA);
+                 const numB = parseFloat(valB);
+                 if (!isNaN(numA) && !isNaN(numB) && !(dateA && dateB)) {
+                      if (numA < numB) return currentSortDirection === 'asc' ? -1 : 1;
+                      if (numA > numB) return currentSortDirection === 'asc' ? 1 : -1;
+                      return 0;
+                 }
+                valA = String(valA);
+                valB = String(valB);
+                const comparison = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
+                return currentSortDirection === 'asc' ? comparison : -comparison;
+            });
+            filteredVehicles = vehiclesToSort;
+        }
+
+
+        if (filteredVehicles.length === 0) {
+            const colCount = document.querySelectorAll('#vehicleTable thead th').length || 10;
+            tableBody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted">No se encontraron vehículos ${searchTerm ? 'que coincidan' : ''}.</td></tr>`;
+            return;
+        }
+
+        filteredVehicles.forEach((veh) => {
+            const originalIndex = vehicles.findIndex(v => v.id === veh.id);
+            if (originalIndex === -1) {
+                 console.error(`Vehicle ID ${veh.id} (${veh.marcaModelo}) not found in original 'vehicles' array. Skipping.`);
+                 return;
+            }
+
+            const row = document.createElement("tr");
+            row.setAttribute('data-id', veh.id);
+
+            // --- Deadline Checks ---
+            const mantInfo = isWithinDays(veh.proximoMantenimiento);
+            const placasChangeInfo = isWithinDays(veh.cambioPlacas);
+            const seguroInfo = isWithinDays(veh.vencimientoSeguro);
+            const verifInfo = getNextVerificationInfo(veh.placas, veh.lastVerificationDate); // Uses updated logic
+
+            // --- Create Badges (Only for specific columns now) ---
+            const createBadge = (info, baseText, itemType = '') => {
+                const dateStr = baseText || 'N/A';
+                if (!info || info.status === 'nodate' || info.status === 'invalid' || info.status === 'error') return dateStr;
+
+                let badgeClass = ''; let icon = '';
+                let text = dateStr;
+                 if(info.daysDiff !== Infinity && info.daysDiff !== null) {
+                    if (info.daysDiff > 0) text += ` (en ${info.daysDiff} día${info.daysDiff !== 1 ? 's' : ''})`;
+                    else if (info.daysDiff === 0) text += ' (Hoy)';
+                    else text += ` (${Math.abs(info.daysDiff)} día${Math.abs(info.daysDiff) !== 1 ? 's' : ''} atr.)`;
+                 }
+                 if (info.status === 'overdue') { badgeClass = 'badge-danger'; icon = '<i class="fas fa-exclamation-circle"></i> '; }
+                 else if (info.status === 'due') { badgeClass = 'badge-warning'; icon = '<i class="fas fa-clock"></i> '; }
+                 else return text; // Only badge if near or overdue
+
+                 let badgeHTML = `<span class="badge ${badgeClass}">${icon}${text}</span>`;
+
+                 // Add "Mark Renewed" button for insurance specifically if due/overdue
+                 if (itemType === 'insurance' && (info.status === 'due' || info.status === 'overdue')) {
+                     badgeHTML += `<button class="btn btn-success btn-sm" onclick="markInsuranceRenewed(${originalIndex})" title="Marcar Seguro como Renovado"> <i class="fas fa-check"></i> Renovar </button>`;
+                 }
+                 return badgeHTML;
+            };
+
+            const mantBadge = createBadge(mantInfo, veh.proximoMantenimiento);
+            const placasChangeBadge = createBadge(placasChangeInfo, veh.cambioPlacas);
+            const seguroBadge = createBadge(seguroInfo, veh.vencimientoSeguro, 'insurance'); // Pass type
+
+            // --- Verification Cell Class and Content (REVISED LOGIC) ---
+            let verifCellClass = 'verif-future'; // Default class
+            let verifCellText = verifInfo.text || 'N/A';
+            let verifButtonHTML = '';
+
+            if (verifInfo.status === 'completed') {
+                verifCellClass = 'verif-ok'; // Green: Verified this period
+                verifCellText = `<i class="fas fa-check-circle"></i> ${verifInfo.text}`;
+                // No button needed if completed
+            } else if (verifInfo.status === 'overdue') {
+                verifCellClass = 'verif-overdue'; // Red: Deadline passed
+                verifCellText += ` (${Math.abs(verifInfo.daysDiff)} día${Math.abs(verifInfo.daysDiff) !== 1 ? 's' : ''} atr.)`;
+                verifButtonHTML = `<button class="btn btn-success btn-sm" onclick="markVerificationDone(${originalIndex})" title="Marcar Verificación como Realizada"><i class="fas fa-check-circle"></i> Marcar Verif.</button>`;
+            } else if (verifInfo.isInCurrentPeriod) { // Check if *within* the months now
+                verifCellClass = 'verif-due'; // Yellow: Within verification months but not completed
+                 // Add deadline info if available and 'due' status based on end date
+                 if (verifInfo.status === 'due') {
+                     if (verifInfo.daysDiff === 0) verifCellText += ' (Plazo: Hoy)';
+                     else if (verifInfo.daysDiff > 0) verifCellText += ` (Plazo: ${verifInfo.daysDiff} día${verifInfo.daysDiff !== 1 ? 's' : ''})`;
+                 }
+                 verifButtonHTML = `<button class="btn btn-success btn-sm" onclick="markVerificationDone(${originalIndex})" title="Marcar Verificación como Realizada"><i class="fas fa-check-circle"></i> Marcar Verif.</button>`;
+             } else if (verifInfo.status === 'due') { // Approaching deadline, but not yet in the period months (less common case)
+                verifCellClass = 'verif-due'; // Yellow
+                if (verifInfo.daysDiff === 0) verifCellText += ' (Plazo: Hoy)';
+                else if (verifInfo.daysDiff > 0) verifCellText += ` (Plazo: ${verifInfo.daysDiff} día${verifInfo.daysDiff !== 1 ? 's' : ''})`;
+                verifButtonHTML = `<button class="btn btn-success btn-sm" onclick="markVerificationDone(${originalIndex})" title="Marcar Verificación como Realizada"><i class="fas fa-check-circle"></i> Marcar Verif.</button>`;
+            } else if (verifInfo.status === 'future') {
+                 verifCellClass = 'verif-future'; // Default, no special style needed
+            } else { // nodate, invalid, error
+                 verifCellClass = `verif-${verifInfo.status}`; // e.g., verif-nodate
+                 verifCellText = verifInfo.text; // Display specific text like N/A or error
+            }
+             // Add button if not completed and not N/A/Invalid
+            if (verifInfo.status !== 'completed' && verifInfo.status !== 'nodate' && verifInfo.status !== 'invalid' && verifInfo.status !== 'error') {
+                if (!verifButtonHTML) { // Ensure button exists if needed
+                     verifButtonHTML = `<button class="btn btn-success btn-sm" onclick="markVerificationDone(${originalIndex})" title="Marcar Verificación como Realizada"><i class="fas fa-check-circle"></i> Marcar Verif.</button>`;
+                }
+            } else {
+                verifButtonHTML = ''; // No button if completed or N/A
+            }
+
+            // --- Document Status ---
+            const polizaIcon = veh.polizaBase64 ? '<i class="fas fa-file-pdf text-success" title="Póliza cargada"></i>' : '<i class="fas fa-file-alt text-muted" title="Sin Póliza"></i>';
+            const tarjetaIcon = veh.tarjetaCirculacionBase64 ? '<i class="fas fa-id-card text-success" title="Tarjeta cargada"></i>' : '<i class="fas fa-id-card text-muted" title="Sin Tarjeta"></i>';
+            const additionalDocsCount = (Array.isArray(veh.additionalDocuments) ? veh.additionalDocuments.length : 0);
+            const additionalDocsIcon = `<i class="fas fa-folder-open ${additionalDocsCount > 0 ? 'text-info' : 'text-muted'}" title="${additionalDocsCount} Documentos Adicionales"></i>`;
+
+
+            row.innerHTML = `
+                <td>
+                    <a href="#" class="vehicle-details-link" onclick="openEditVehicleModal(${originalIndex})">${veh.marcaModelo || 'Sin nombre'}</a>
+                    <div style="font-size: 0.85em; color: var(--text-muted);">${veh.color || ''} ${veh.año ? `(${veh.año})` : ''}</div>
+                </td>
+                <td>${veh.placas || '<span class="text-muted">N/A</span>'}</td>
+                <td>${mantBadge}</td>
+                <td class="${verifCellClass}">
+                    <div class="verification-cell">
+                        <span>${verifCellText}</span>
+                        ${verifButtonHTML}
+                    </div>
+                </td>
+                <td>${placasChangeBadge}</td>
+                <td>${seguroBadge}</td>
+                <td class="text-center">${veh.refrendoAnioPagado ? `<span class="badge badge-success">${veh.refrendoAnioPagado}</span>` : '<span class="badge badge-secondary">N/P</span>'}</td>
+                <td class="text-center">
+                    <button class="btn btn-light btn-sm btn-icon" onclick="openVehicleDocModal(${originalIndex}, 'polizaBase64', 'Póliza de Seguro')" title="Póliza">${polizaIcon}</button>
+                    <button class="btn btn-light btn-sm btn-icon" onclick="openVehicleDocModal(${originalIndex}, 'tarjetaCirculacionBase64', 'Tarjeta de Circulación')" title="Tarjeta Circ.">${tarjetaIcon}</button>
+                    <button class="btn btn-light btn-sm btn-icon" onclick="openAdditionalDocsModal(${originalIndex})" title="${additionalDocsCount} Documentos Adicionales">${additionalDocsIcon} (${additionalDocsCount})</button>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-secondary btn-sm" onclick="openFaultsModal(${originalIndex})" title="Historial de Fallas (${veh.fallas?.length || 0})">
+                        <i class="fas fa-wrench"></i> (${veh.fallas?.length || 0})
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openMaintenanceModal(${originalIndex})" title="Historial de Manto. (${veh.mantenimientos?.length || 0})">
+                        <i class="fas fa-tools"></i> (${veh.mantenimientos?.length || 0})
+                    </button>
+                 </td>
+                <td>
+                    <button class="btn btn-primary btn-sm btn-icon" onclick="openEditVehicleModal(${originalIndex})" title="Editar Vehículo">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-info btn-sm btn-icon" onclick="printVehicleSummary(${originalIndex})" title="Imprimir Resumen">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-icon" onclick="deleteVehicle(${originalIndex})" title="Eliminar Vehículo">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        updateSortIcons();
+    }
+
+    // Debounced version of filterVehicles (now called directly by search handler)
+    const debouncedFilterTable = debounce(renderTable, 300);
+
+    function filterVehicles() {
+        // This function is now primarily called after a search term is set (e.g., by suggestion click or clear)
+        renderTable();
+    }
+
+     function clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsDiv = document.getElementById('searchSuggestions');
+        if (searchInput) searchInput.value = '';
+        if (suggestionsDiv) {
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.style.display = 'none';
+        }
+        filterVehicles(); // Re-render without filter
+    }
+
+    // --- NEW: Search Input Handling with Suggestions ---
+    function handleSearchInput() {
+        const input = document.getElementById('searchInput');
+        const suggestionsDiv = document.getElementById('searchSuggestions');
+        const searchTerm = input.value.trim().toLowerCase();
+
+        if (!suggestionsDiv) return;
+
+        if (searchTerm.length < 2) { // Minimum characters to trigger suggestions
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.style.display = 'none';
+            debouncedFilterTable(); // Filter table even with short/no input (debounced)
+            return;
+        }
+
+        // Filter vehicles for suggestions
+        const matches = vehicles.filter(v =>
+            (v.marcaModelo?.toLowerCase() || "").includes(searchTerm) ||
+            (v.placas?.toLowerCase() || "").includes(searchTerm)
+        ).slice(0, 7); // Limit suggestions
+
+        suggestionsDiv.innerHTML = ''; // Clear previous suggestions
+
+        if (matches.length > 0) {
+            matches.forEach(veh => {
+                const item = document.createElement('div');
+                item.classList.add('suggestion-item');
+                const displayText = `${veh.marcaModelo} (${veh.placas || 'N/A'})`;
+                const searchValue = displayText; // Value to put in search box on click
+
+                // Highlight the search term within the display text
+                const regex = new RegExp(`(${searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'); // Escape regex special chars
+                const highlightedText = displayText.replace(regex, '<mark>$1</mark>');
+
+                item.innerHTML = highlightedText;
+                item.dataset.value = searchValue; // Store the value to set on click
+
+                item.addEventListener('mousedown', (e) => { // Use mousedown to fire before blur
+                    e.preventDefault(); // Prevent input blur before click registers
+                    input.value = searchValue; // Set input value
+                    suggestionsDiv.style.display = 'none'; // Hide suggestions
+                    suggestionsDiv.innerHTML = '';
+                    filterVehicles(); // Trigger table filtering immediately
+                });
+                suggestionsDiv.appendChild(item);
+            });
+            suggestionsDiv.style.display = 'block'; // Show suggestions
+        } else {
+            suggestionsDiv.style.display = 'none'; // Hide if no matches
+        }
+
+         debouncedFilterTable(); // Still filter the main table (debounced) as user types
+    }
+
+    // Debounced version for input event
+    const debouncedHandleSearchInput = debounce(handleSearchInput, 300);
+
+    // Hide suggestions when clicking outside or input loses focus
+    document.addEventListener('click', (event) => {
+        const searchContainer = document.querySelector('.search-container');
+        const suggestionsDiv = document.getElementById('searchSuggestions');
+        if (suggestionsDiv && searchContainer && !searchContainer.contains(event.target)) {
+            suggestionsDiv.style.display = 'none';
+        }
+    });
+    // Optional: Hide on blur too, but 'mousedown' on item handles most cases
+    // document.getElementById('searchInput')?.addEventListener('blur', () => {
+    //     // Delay hiding slightly to allow suggestion click to register
+    //     setTimeout(() => {
+    //         const suggestionsDiv = document.getElementById('searchSuggestions');
+    //         if (suggestionsDiv) suggestionsDiv.style.display = 'none';
+    //     }, 150);
+    // });
+
+
+    // Sorting Logic
+    function handleSort(event) {
+        const header = event.target.closest('th');
+        if (!header || !header.dataset.sort) return;
+        const sortKey = header.dataset.sort;
+
+        if (currentSortColumn === sortKey) {
+            currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortColumn = sortKey;
+            currentSortDirection = 'asc';
+        }
+        renderTable();
+    }
+
+    function updateSortIcons() {
+        const tableHeaders = document.querySelectorAll('#vehicleTable thead th');
+        if (!tableHeaders) return;
+
+        tableHeaders.forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (!icon) return;
+
+            icon.className = 'sort-icon fas fa-sort'; // Default icon
+            icon.classList.remove('active');
+
+            if (th.dataset.sort === currentSortColumn) {
+                icon.classList.remove('fa-sort');
+                icon.classList.add(currentSortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down', 'active');
+            } else if (!th.dataset.sort) {
+                 icon.classList.remove('fa-sort', 'fa-sort-up', 'fa-sort-down');
+            }
+        });
+    }
+
+
+    /* ========================================================================== */
+    /*  4. MODAL MANAGEMENT (Generic Open/Close)                                */
+    /* ========================================================================== */
+
+    function openModal(modalId) {
+        const modalOverlay = document.getElementById(modalId);
+        if (modalOverlay) {
+            modalOverlay.style.display = 'flex';
+            setTimeout(() => {
+                 modalOverlay.classList.add('active');
+                const focusable = modalOverlay.querySelector('.modal-body input:not([type=hidden]):not([disabled]), .modal-body button:not([disabled]), .modal-body textarea:not([disabled]), .modal-body select:not([disabled])');
+                 if(focusable) {
+                    setTimeout(() => {
+                        try { focusable.focus(); } catch(e){ /* Ignore */ }
+                     }, 310); // After modal animation
+                 }
+            }, 10); // Small delay ensures display:flex is applied first
+        } else {
+            console.error("Modal overlay not found:", modalId);
+        }
+    }
+
+    function closeModal(modalId) {
+        const modalOverlay = document.getElementById(modalId);
+        if (modalOverlay) {
+            modalOverlay.classList.remove('active');
+             modalOverlay.addEventListener('transitionend', function handleTransitionEnd() {
+                modalOverlay.style.display = 'none';
+                modalOverlay.removeEventListener('transitionend', handleTransitionEnd);
+             }, { once: true });
+             setTimeout(() => { // Fallback in case transitionend doesn't fire
+                if (modalOverlay && !modalOverlay.classList.contains('active')) modalOverlay.style.display = 'none';
+             }, 350);
+        } else {
+             console.error("Modal overlay not found for closing:", modalId);
+        }
+
+        // Reset relevant global indices
+        if (['vehicleModalOverlay', 'faultsModalOverlay', 'maintenanceModalOverlay', 'vehicleDocModalOverlay', 'additionalDocsModalOverlay'].includes(modalId)) {
+            currentVehicleIndex = null;
+            currentDocField = null;
+            currentAdditionalDocId = null;
+        }
+        if (['licensesModalOverlay', 'licenseDocModalOverlay'].includes(modalId)) {
+             currentPersonIndex = null;
+        }
+         if (modalId === 'vehicleModalOverlay') clearVehicleForm();
+         if (modalId === 'importModalOverlay') { // Clear import modal state
+             const importFile = document.getElementById('importFile');
+             const importResult = document.getElementById('importResult');
+             if(importFile) importFile.value = '';
+             if(importResult) importResult.innerHTML = '';
+         }
+         if (modalId === 'additionalDocsModalOverlay') { // Clear add doc form
+             const docNameInput = document.getElementById('newDocName');
+             const docFileInput = document.getElementById('newDocFile');
+             if(docNameInput) docNameInput.value = '';
+             if(docFileInput) docFileInput.value = '';
+         }
+         // Clear search suggestions if a modal is closed
+         const suggestionsDiv = document.getElementById('searchSuggestions');
+         if (suggestionsDiv) suggestionsDiv.style.display = 'none';
+
+    }
+
+     // Close modal on Escape key press
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            const activeModals = document.querySelectorAll('.modal-overlay.active');
+             if (activeModals.length > 0) {
+                 // Close the topmost active modal
+                 const topModal = activeModals[activeModals.length - 1];
+                 closeModal(topModal.id);
+             }
+        }
+    });
+    // Close modal clicking overlay background
+     document.addEventListener('click', (event) => {
+        if (event.target.classList.contains('modal-overlay')) {
+             closeModal(event.target.id);
+        }
+    });
+
+
+    /* ========================================================================== */
+    /*  5. VEHICLE MANAGEMENT (CRUD & Status Updates)                           */
+    /* ========================================================================== */
+
+    function clearVehicleForm() {
+        const indexInput = document.getElementById('editVehicleIndex');
+        if(indexInput) indexInput.value = "";
+        const modal = document.getElementById('vehicleModal');
+        if (!modal) return;
+        modal.querySelectorAll('.modal-body input[type="text"], .modal-body input[type="number"], .modal-body input[type="date"]:not([readonly]), .modal-body textarea, .modal-body select')
+             .forEach(el => el.value = '');
+        // Clear readonly fields too
+        const lastVerifInput = document.getElementById('vehicleLastVerification'); if (lastVerifInput) lastVerifInput.value = '';
+        // Ensure number inputs are cleared properly
+        const yearInput = document.getElementById('vehicleAnio'); if (yearInput) yearInput.value = '';
+        const refrendoInput = document.getElementById('vehicleRefrendoAnio'); if (refrendoInput) refrendoInput.value = '';
+    }
+
+    function openAddVehicleModal() {
+        currentVehicleIndex = null;
+        clearVehicleForm();
+        const titleEl = document.getElementById('vehicleModalTitle');
+        if (titleEl) titleEl.textContent = "Agregar Nuevo Vehículo";
+        openModal('vehicleModalOverlay');
+    }
+
+    function openEditVehicleModal(index) {
+        if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            console.error("Invalid index for openEditVehicleModal:", index);
+            showToast("Error: No se pudo encontrar el vehículo.", "error"); return;
+        }
+        currentVehicleIndex = index;
+        const veh = vehicles[index];
+        clearVehicleForm();
+        const indexInput = document.getElementById('editVehicleIndex');
+        if (indexInput) indexInput.value = index;
+
+        const fields = {
+            'vehicleMarcaModelo': veh.marcaModelo, 'vehicleModelo': veh.modelo,
+            'vehicleAnio': veh.año, 'vehicleColor': veh.color,
+            'vehiclePlacas': veh.placas, 'vehicleNumSerie': veh.numeroSerie,
+            'vehicleFechaAdq': veh.fechaAdquisicion, 'vehicleKilometraje': veh.kilometraje,
+            'vehicleMantenimiento': veh.proximoMantenimiento, 'vehicleCambioPlacas': veh.cambioPlacas,
+            'vehicleVencSeguro': veh.vencimientoSeguro, 'vehicleAseguradora': veh.aseguradora,
+            'vehicleTelefono': veh.telefono, 'vehicleRefrendoAnio': veh.refrendoAnioPagado,
+            'vehicleObservaciones': veh.observaciones,
+            'vehicleLastVerification': veh.lastVerificationDate // Populate readonly field
+        };
+        for (const id in fields) {
+            const element = document.getElementById(id);
+            if (element) {
+                 // Handle potential null/undefined values when setting
+                 element.value = fields[id] === null || fields[id] === undefined ? '' : fields[id];
+            }
+            else console.warn(`Element ${id} not found in vehicle form.`);
+        }
+
+        const titleEl = document.getElementById('vehicleModalTitle');
+        if(titleEl) titleEl.textContent = `Editar Vehículo: ${veh.marcaModelo || 'Sin Nombre'}`;
+        openModal('vehicleModalOverlay');
+    }
+
+    function saveVehicle() {
+        const marcaModeloInput = document.getElementById('vehicleMarcaModelo');
+        const marcaModelo = marcaModeloInput ? marcaModeloInput.value.trim() : '';
+        const editIndexStr = document.getElementById('editVehicleIndex')?.value;
+        const isEditing = editIndexStr !== undefined && editIndexStr !== "";
+        const editIndex = isEditing ? parseInt(editIndexStr) : null;
+
+        // Validation (Only Marca/Modelo is mandatory)
+        if (!marcaModelo) {
+            showToast("El campo Marca/Modelo es obligatorio.", "warning");
+            if (marcaModeloInput) marcaModeloInput.focus();
+            return;
+        }
+
+         if (isEditing && (editIndex === null || isNaN(editIndex) || editIndex < 0 || editIndex >= vehicles.length || !vehicles[editIndex])) {
+            showToast("Error al identificar el vehículo para editar.", "error");
+            console.error("Invalid editIndex during save:", editIndex); return;
+        }
+
+        const getValueOrNull = (id) => document.getElementById(id)?.value || null;
+        const getTrimmedValue = (id) => document.getElementById(id)?.value.trim() || '';
+        const getIntValueOrNull = (id) => {
+            const val = document.getElementById(id)?.value;
+            return val ? parseInt(val) : null; // Return null if empty or NaN
+        }
+
+        const vehicleData = {
+            id: isEditing ? vehicles[editIndex].id : Date.now(),
+            marcaModelo: marcaModelo,
+            modelo: getTrimmedValue('vehicleModelo'),
+            año: getIntValueOrNull('vehicleAnio'),
+            color: getTrimmedValue('vehicleColor'),
+            placas: getTrimmedValue('vehiclePlacas'),
+            numeroSerie: getTrimmedValue('vehicleNumSerie'),
+            fechaAdquisicion: getValueOrNull('vehicleFechaAdq'),
+            kilometraje: getTrimmedValue('vehicleKilometraje'),
+            proximoMantenimiento: getValueOrNull('vehicleMantenimiento'),
+            cambioPlacas: getValueOrNull('vehicleCambioPlacas'),
+            vencimientoSeguro: getValueOrNull('vehicleVencSeguro'),
+            aseguradora: getTrimmedValue('vehicleAseguradora'),
+            telefono: getTrimmedValue('vehicleTelefono'),
+            refrendoAnioPagado: getIntValueOrNull('vehicleRefrendoAnio'),
+            observaciones: getTrimmedValue('vehicleObservaciones'),
+            // Preserve existing arrays/docs/verification date if editing, initialize if adding
+            lastVerificationDate: isEditing ? vehicles[editIndex].lastVerificationDate || null : null, // Preserve
+            fallas: isEditing && Array.isArray(vehicles[editIndex].fallas) ? vehicles[editIndex].fallas : [],
+            mantenimientos: isEditing && Array.isArray(vehicles[editIndex].mantenimientos) ? vehicles[editIndex].mantenimientos : [],
+            polizaBase64: isEditing ? vehicles[editIndex].polizaBase64 || "" : "",
+            tarjetaCirculacionBase64: isEditing ? vehicles[editIndex].tarjetaCirculacionBase64 || "" : "",
+            additionalDocuments: isEditing && Array.isArray(vehicles[editIndex].additionalDocuments) ? vehicles[editIndex].additionalDocuments : [],
+        };
+
+        if (isEditing) {
+            vehicles[editIndex] = vehicleData;
+            showToast("Vehículo actualizado.", "success");
+        } else {
+            vehicles.push(vehicleData);
+            showToast("Vehículo agregado.", "success");
+        }
+
+        saveToLocalStorage();
+        renderTable();
+        closeModal('vehicleModalOverlay');
+    }
+
+     function deleteVehicle(index) {
+       if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            console.error("Invalid index for deleteVehicle:", index);
+            showToast("Error: No se pudo encontrar el vehículo.", "error"); return;
+       }
+      const veh = vehicles[index];
+      if (confirm(`¿Eliminar "${veh.marcaModelo || 'Sin Nombre'} (${veh.placas || 'N/A'})"?\nEsta acción no se puede deshacer.`)) {
+        const deletedName = veh.marcaModelo || 'Vehículo';
+        vehicles.splice(index, 1);
+        saveToLocalStorage();
+        showToast(`Vehículo "${deletedName}" eliminado.`, "info");
+        renderTable();
+      }
+    }
+
+    // --- NEW: Mark Insurance Renewed ---
+    function markInsuranceRenewed(index) {
+        if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            showToast("Error: Vehículo no encontrado.", "error"); return;
+        }
+        const veh = vehicles[index];
+        const today = new Date();
+        const nextYear = today.getFullYear() + 1;
+        const suggestedDate = `${nextYear}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+
+        const newExpiryDate = prompt(`Seguro para ${veh.marcaModelo} (${veh.placas || 'N/A'}).\nIngrese la NUEVA fecha de vencimiento (YYYY-MM-DD):`, veh.vencimientoSeguro ? new Date(new Date(veh.vencimientoSeguro).setFullYear(new Date(veh.vencimientoSeguro).getFullYear() + 1)).toISOString().split('T')[0] : suggestedDate);
+
+        if (newExpiryDate === null) return; // User cancelled
+
+        if (!isValidDateString(newExpiryDate)) {
+             showToast("Fecha inválida. Formato debe ser YYYY-MM-DD.", "error");
+             return;
+        }
+
+        veh.vencimientoSeguro = newExpiryDate;
+        saveToLocalStorage();
+        renderTable();
+        showToast("Fecha de vencimiento de seguro actualizada.", "success");
+    }
+
+    // --- NEW: Mark Verification Done ---
+    function markVerificationDone(index) {
+        if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+             showToast("Error: Vehículo no encontrado.", "error"); return;
+        }
+        const veh = vehicles[index];
+        const todayStr = new Date().toISOString().split('T')[0];
+        const verificationDate = prompt(`Verificación para ${veh.marcaModelo} (${veh.placas || 'N/A'}).\nIngrese la FECHA en que se realizó (YYYY-MM-DD):`, todayStr); // Default to today
+
+        if (verificationDate === null) return; // User cancelled
+
+        if (!isValidDateString(verificationDate)) {
+            showToast("Fecha inválida. Formato debe ser YYYY-MM-DD.", "error");
+            return;
+        }
+
+        veh.lastVerificationDate = verificationDate;
+        saveToLocalStorage();
+        renderTable();
+        showToast("Fecha de última verificación actualizada.", "success");
+    }
+
+    /* ========================================================================== */
+    /*  6. FAULTS MANAGEMENT                                                      */
+    /* ========================================================================== */
+
+    function openFaultsModal(index) {
+        if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+             console.error("Invalid index for openFaultsModal:", index);
+             showToast("Error al abrir fallas.", "error"); return;
+        }
+      currentVehicleIndex = index;
+      const vehicle = vehicles[index];
+      const vehicleName = vehicle.marcaModelo || 'Vehículo';
+      const vehiclePlacas = vehicle.placas || 'N/A';
+
+      const nameEl = document.getElementById("faultsVehicleName");
+      const titleEl = document.getElementById('faultsModalTitle');
+      if (nameEl) nameEl.textContent = `${vehicleName} (${vehiclePlacas})`;
+      if (titleEl) titleEl.textContent = `Fallas de ${vehicleName}`;
+
+       if (!Array.isArray(vehicle.fallas)) vehicle.fallas = [];
+
+      renderFaultsTable(vehicle);
+      const faultDateInput = document.getElementById("newFaultDate");
+      const faultDescInput = document.getElementById("newFaultDesc");
+      if (faultDateInput) faultDateInput.value = ""; // Clear fields
+      if (faultDescInput) faultDescInput.value = "";
+      openModal('faultsModalOverlay');
+    }
+
+    function renderFaultsTable(veh) {
+      const tb = document.getElementById("faultsTableBody");
+      if (!tb) { console.error("Faults table body not found!"); return; }
+      tb.innerHTML = "";
+      const fallasArray = Array.isArray(veh.fallas) ? veh.fallas : [];
+
+      if (fallasArray.length === 0) {
+          tb.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay fallas registradas.</td></tr>';
+          return;
+      }
+      const sortedFallas = [...fallasArray].sort((a, b) => (b?.fechaFalla || '0').localeCompare(a?.fechaFalla || '0')); // Desc
+
+      sortedFallas.forEach((falla) => {
+        if (!falla || typeof falla !== 'object' || falla.id === undefined || falla.id === null) return; // Skip invalid
+
+        const tr = document.createElement("tr");
+        const faultId = falla.id;
+        tr.innerHTML = `
+          <td>${falla.fechaFalla || "N/A"}</td>
+          <td>${falla.descripcion || "Sin descripción"}</td>
+          <td><button class="btn btn-danger btn-sm btn-icon" onclick="removeFault('${faultId}')" title="Eliminar Falla"><i class="fas fa-trash-alt"></i></button></td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+
+    function addFault() {
+      if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+           showToast("Error: Vehículo no seleccionado.", "error"); return;
+      }
+      const dateInput = document.getElementById("newFaultDate");
+      const descInput = document.getElementById("newFaultDesc");
+      const fecha = dateInput ? dateInput.value : null;
+      const desc = descInput ? descInput.value.trim() : "";
+
+      if (!desc) { showToast("La descripción es obligatoria.", "warning"); if (descInput) descInput.focus(); return; }
+      if (fecha && !isValidDateString(fecha)) { showToast("Fecha inválida. Formato debe ser YYYY-MM-DD.", "error"); if(dateInput) dateInput.focus(); return; }
+
+
+      if (!Array.isArray(vehicles[currentVehicleIndex].fallas)) vehicles[currentVehicleIndex].fallas = [];
+      vehicles[currentVehicleIndex].fallas.push({ id: Date.now(), fechaFalla: fecha || null, descripcion: desc });
+      saveToLocalStorage();
+      renderFaultsTable(vehicles[currentVehicleIndex]);
+      renderTable(); // Update main table count
+      if (dateInput) dateInput.value = ""; // Clear fields after adding
+      if (descInput) descInput.value = "";
+      showToast("Falla agregada.", "success");
+    }
+
+    function removeFault(faultId) {
+       if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+           showToast("Error: Vehículo no seleccionado.", "error"); return;
+       }
+       const vehicle = vehicles[currentVehicleIndex];
+       if (!Array.isArray(vehicle.fallas)) { showToast("Error: Historial de fallas no encontrado.", "error"); return; }
+
+       const fallasArray = vehicle.fallas;
+       const faultIdNum = Number(faultId);
+       const faultIndex = fallasArray.findIndex(f => f.id === faultIdNum);
+
+       if (faultIndex !== -1) {
+           fallasArray.splice(faultIndex, 1);
+           saveToLocalStorage();
+           renderFaultsTable(vehicle);
+           renderTable();
+           showToast("Falla eliminada.", "info");
+       } else {
+           showToast("Error: No se encontró la falla.", "error");
+       }
+    }
+
+    function printFaults() {
+      if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+           showToast("Selecciona un vehículo.", "error"); return;
+      }
+      const veh = vehicles[currentVehicleIndex];
+      const fallasArray = Array.isArray(veh.fallas) ? veh.fallas : [];
+      let content = `<h2>Historial de Fallas</h2><p><strong>Vehículo:</strong> ${veh.marcaModelo || 'N/A'} (${veh.placas || 'N/A'})</p><hr>`;
+      if (fallasArray.length === 0) {
+        content += "<p>No hay fallas registradas.</p>";
+      } else {
+        content += `<table style="width:100%; border-collapse:collapse;"><thead><tr style="background:#f2f2f2;"><th style="border:1px solid #ccc; padding:6px;">Fecha</th><th style="border:1px solid #ccc; padding:6px;">Descripción</th></tr></thead><tbody>`;
+        [...fallasArray].sort((a, b) => (a?.fechaFalla || '9').localeCompare(b?.fechaFalla || '9')).forEach(f => { // Asc
+          if (f && typeof f === 'object') {
+              content += `<tr><td style="border:1px solid #ccc; padding:6px; vertical-align: top;">${f.fechaFalla || "N/A"}</td><td style="border:1px solid #ccc; padding:6px;">${f.descripcion || ""}</td></tr>`;
+          }
+        });
+        content += "</tbody></table>";
+      }
+      openPrintWindow(content, `Fallas - ${veh.marcaModelo || 'Vehículo'}`);
+    }
+
+    /* ========================================================================== */
+    /*  7. MAINTENANCE MANAGEMENT                                                 */
+    /* ========================================================================== */
+
+    function openMaintenanceModal(index) {
+      if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            showToast("Error al abrir mantenimientos.", "error"); return;
+      }
+      currentVehicleIndex = index;
+      const veh = vehicles[index];
+      const vehicleName = veh.marcaModelo || 'Vehículo';
+      const vehiclePlacas = veh.placas || 'N/A';
+
+      const nameEl = document.getElementById("maintenanceVehicleName");
+      const titleEl = document.getElementById('maintenanceModalTitle');
+      if (nameEl) nameEl.textContent = `${vehicleName} (${vehiclePlacas})`;
+      if (titleEl) titleEl.textContent = `Mantenimientos de ${vehicleName}`;
+
+      if (!Array.isArray(veh.mantenimientos)) veh.mantenimientos = [];
+
+      renderMaintenanceTable(veh);
+      const dateInput = document.getElementById("newMaintenanceDate");
+      const kmInput = document.getElementById("newMaintenanceKm");
+      const nextChangeInput = document.getElementById("newMaintenanceNextChange");
+      if (dateInput) dateInput.value = ""; // Clear fields
+      if (kmInput) kmInput.value = "";
+      if (nextChangeInput) nextChangeInput.value = "";
+      openModal('maintenanceModalOverlay');
+    }
+
+    function renderMaintenanceTable(veh) {
+      const tb = document.getElementById("maintenanceTableBody");
+       if (!tb) { console.error("Maintenance table body not found!"); return; }
+       tb.innerHTML = "";
+      const mantosArray = Array.isArray(veh.mantenimientos) ? veh.mantenimientos : [];
+
+       if (mantosArray.length === 0) {
+          tb.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay mantenimientos registrados.</td></tr>';
+          return;
+      }
+      const sortedMantos = [...mantosArray].sort((a, b) => (b?.fechaManto || '0').localeCompare(a?.fechaManto || '0')); // Desc
+
+      sortedMantos.forEach((manto) => {
+         if (!manto || typeof manto !== 'object' || manto.id === undefined || manto.id === null) return; // Skip invalid
+
+        const tr = document.createElement("tr");
+        const mantoId = manto.id;
+        tr.innerHTML = `
+          <td>${manto.fechaManto || "N/A"}</td>
+          <td>${manto.kilometraje || "N/A"}</td>
+          <td>${manto.proximoCambio || "N/A"}</td>
+          <td><button class="btn btn-danger btn-sm btn-icon" onclick="removeMaintenance('${mantoId}')" title="Eliminar Mantenimiento"><i class="fas fa-trash-alt"></i></button></td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+
+    function addMaintenance() {
+      if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+          showToast("Error: Vehículo no seleccionado.", "error"); return;
+      }
+      const veh = vehicles[currentVehicleIndex];
+      const dateInput = document.getElementById("newMaintenanceDate");
+      const kmInput = document.getElementById("newMaintenanceKm");
+      const nextChangeInput = document.getElementById("newMaintenanceNextChange");
+      const fecha = dateInput ? dateInput.value : null;
+      const km = kmInput ? kmInput.value.trim() : "";
+      const nextChange = nextChangeInput ? nextChangeInput.value : null;
+
+      if (!fecha) { showToast("La fecha es obligatoria.", "warning"); if (dateInput) dateInput.focus(); return; }
+      if (!km) { showToast("El kilometraje es obligatorio.", "warning"); if (kmInput) kmInput.focus(); return; }
+      if (!isValidDateString(fecha)) { showToast("Fecha inválida. Formato debe ser YYYY-MM-DD.", "error"); if(dateInput) dateInput.focus(); return; }
+      if (nextChange && !isValidDateString(nextChange)) { showToast("Fecha Próximo Manto inválida. Formato YYYY-MM-DD.", "error"); if(nextChangeInput) nextChangeInput.focus(); return; }
+
+
+      if (!Array.isArray(veh.mantenimientos)) veh.mantenimientos = [];
+      veh.mantenimientos.push({ id: Date.now(), fechaManto: fecha, kilometraje: km, proximoCambio: nextChange || null });
+
+      // Optionally update the main vehicle's next maintenance date
+      if (nextChange) {
+           let currentProxMantoDate = null;
+           if (veh.proximoMantenimiento && isValidDateString(veh.proximoMantenimiento)) {
+               currentProxMantoDate = new Date(veh.proximoMantenimiento + 'T00:00:00');
+           }
+           const newNextChangeDate = new Date(nextChange + 'T00:00:00');
+
+           if (!currentProxMantoDate || newNextChangeDate > currentProxMantoDate) {
+               veh.proximoMantenimiento = nextChange;
+                showToast("Próximo mantenimiento del vehículo actualizado.", "info");
+           }
+      }
+
+      saveToLocalStorage();
+      renderMaintenanceTable(veh);
+      renderTable(); // Update main table
+      if (dateInput) dateInput.value = ""; // Clear fields after adding
+      if (kmInput) kmInput.value = "";
+      if (nextChangeInput) nextChangeInput.value = "";
+       showToast("Mantenimiento agregado.", "success");
+    }
+
+    function removeMaintenance(mantoId) {
+        if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+          showToast("Error: Vehículo no seleccionado.", "error"); return;
+        }
+        const vehicle = vehicles[currentVehicleIndex];
+       if (!Array.isArray(vehicle.mantenimientos)) { showToast("Error: Historial no encontrado.", "error"); return; }
+
+       const mantosArray = vehicle.mantenimientos;
+       const maintIdNum = Number(mantoId);
+       const maintIndex = mantosArray.findIndex(m => m.id === maintIdNum);
+
+        if (maintIndex !== -1) {
+            mantosArray.splice(maintIndex, 1);
+            saveToLocalStorage();
+            renderMaintenanceTable(vehicle);
+            renderTable();
+            showToast("Mantenimiento eliminado.", "info");
+        } else {
+             showToast("Error: No se encontró el mantenimiento.", "error");
+        }
+    }
+
+    function printMaintenance() {
+      if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+            showToast("Selecciona un vehículo.", "error"); return;
+       }
+      const veh = vehicles[currentVehicleIndex];
+      const mantosArray = Array.isArray(veh.mantenimientos) ? veh.mantenimientos : [];
+      let content = `<h2>Historial de Mantenimientos</h2><p><strong>Vehículo:</strong> ${veh.marcaModelo || 'N/A'} (${veh.placas || 'N/A'})</p><hr>`;
+       if (mantosArray.length === 0) {
+        content += "<p>No hay mantenimientos registrados.</p>";
+      } else {
+        content += `<table style="width:100%;border-collapse:collapse;"><thead><tr style="background:#f2f2f2;"><th style="border:1px solid #ccc;padding:6px;">Fecha</th><th style="border:1px solid #ccc;padding:6px;">Kilometraje</th><th style="border:1px solid #ccc;padding:6px;">Próximo Cambio</th></tr></thead><tbody>`;
+        [...mantosArray].sort((a, b) => (a?.fechaManto || '9').localeCompare(b?.fechaManto || '9')).forEach(m => { // Asc
+          if (m && typeof m === 'object') {
+             content += `<tr><td style="border:1px solid #ccc;padding:6px;">${m.fechaManto || "N/A"}</td><td style="border:1px solid #ccc;padding:6px;">${m.kilometraje || "N/A"}</td><td style="border:1px solid #ccc;padding:6px;">${m.proximoCambio || "N/A"}</td></tr>`;
+          }
+        });
+        content += "</tbody></table>";
+      }
+      openPrintWindow(content, `Mantenimientos - ${veh.marcaModelo || 'Vehículo'}`);
+    }
+
+    /* ========================================================================== */
+    /*  8. DOCUMENT MANAGEMENT (Vehicle Standard, Additional & License)           */
+    /* ========================================================================== */
+
+    // --- Vehicle Standard Documents (Poliza, Tarjeta Circ) ---
+    function openVehicleDocModal(index, field, docName) {
+      if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            showToast("Error al abrir doc. estándar.", "error"); return;
+       }
+       if (field !== 'polizaBase64' && field !== 'tarjetaCirculacionBase64') {
+            showToast("Error: Tipo de documento no válido.", "error"); return;
+       }
+
+      currentVehicleIndex = index;
+      currentDocField = field;
+      const veh = vehicles[index];
+      const titleEl = document.getElementById("vehicleDocModalTitle");
+      const nameEl = document.getElementById("vehicleDocName");
+      const docActionsDiv = document.getElementById("vehicleDocActions");
+      const fileInput = document.getElementById("vehicleDocFileInput");
+      if (!titleEl || !nameEl || !docActionsDiv || !fileInput) return;
+
+      titleEl.textContent = docName;
+      nameEl.textContent = `${veh.marcaModelo || 'N/A'} (${veh.placas || 'N/A'})`;
+      docActionsDiv.innerHTML = "";
+      fileInput.value = "";
+
+      const base64Data = veh[field];
+      if (base64Data && typeof base64Data === 'string' && base64Data.startsWith('data:')) {
+        const mimeType = getMimeType(base64Data);
+        const extension = getFileExtensionFromMime(mimeType);
+        const safeDocName = sanitizeFilename(docName);
+        const safePlacas = sanitizeFilename(veh.placas || 'SIN_PLACAS');
+        const fileName = `${safeDocName}_${safePlacas}.${extension}`;
+
+        docActionsDiv.innerHTML = `
+            <a href="${base64Data}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm"> <i class="fas fa-eye"></i> Ver</a>
+            <a href="${base64Data}" download="${fileName}" class="btn btn-info btn-sm" style="margin-left: 10px;"> <i class="fas fa-download"></i> Descargar</a>
+        `;
+      } else {
+        docActionsDiv.innerHTML = '<p class="text-muted">No hay documento cargado.</p>';
+      }
+      openModal('vehicleDocModalOverlay');
+    }
+
+    function uploadVehicleDoc() {
+      if (currentVehicleIndex === null || !currentDocField || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+           showToast("Error: No se ha seleccionado vehículo/documento.", "error"); return;
+      }
+      const fileInput = document.getElementById("vehicleDocFileInput");
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        showToast("Selecciona un archivo.", "warning"); return;
+      }
+      const file = fileInput.files[0];
+      const maxSize = 5 * 1024 * 1024; // 5 MB
+       if (file.size > maxSize) {
+           showToast(`Archivo muy grande (máx ${maxSize / 1024 / 1024} MB).`, "warning"); return;
+       }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+            const base64Data = e.target.result;
+            if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) throw new Error("Invalid Base64");
+            vehicles[currentVehicleIndex][currentDocField] = base64Data;
+            saveToLocalStorage();
+            showToast("Documento subido.", "success");
+            renderTable(); // Update main table icons
+            const currentTitle = document.getElementById("vehicleDocModalTitle")?.textContent || "Documento";
+            openVehicleDocModal(currentVehicleIndex, currentDocField, currentTitle); // Refresh modal view
+        } catch (err) {
+            showToast("Error al procesar archivo. Ver consola.", "error");
+            console.error("Error processing file:", err);
+        }
+      };
+       reader.onerror = () => {
+           showToast("Error al leer archivo.", "error");
+            console.error("FileReader error event:", reader.error);
+        };
+      reader.readAsDataURL(file);
+    }
+
+    // --- Vehicle Additional Documents ---
+    function openAdditionalDocsModal(index) {
+         if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            showToast("Error al abrir docs adicionales.", "error"); return;
+         }
+        currentVehicleIndex = index;
+        const veh = vehicles[index];
+        const vehicleName = veh.marcaModelo || 'Vehículo';
+        const vehiclePlacas = veh.placas || 'N/A';
+
+        const nameEl = document.getElementById("additionalDocsVehicleName");
+        const titleEl = document.getElementById('additionalDocsModalTitle');
+        if (nameEl) nameEl.textContent = `${vehicleName} (${vehiclePlacas})`;
+        if (titleEl) titleEl.textContent = `Documentos Adicionales de ${vehicleName}`;
+
+        // Ensure array exists
+        if (!Array.isArray(veh.additionalDocuments)) veh.additionalDocuments = [];
+
+        renderAdditionalDocsTable(veh);
+
+        // Clear form fields
+        const docNameInput = document.getElementById('newDocName');
+        const docFileInput = document.getElementById('newDocFile');
+        if(docNameInput) docNameInput.value = '';
+        if(docFileInput) docFileInput.value = '';
+
+        openModal('additionalDocsModalOverlay');
+    }
+
+     function renderAdditionalDocsTable(veh) {
+        const tbody = document.getElementById("additionalDocsTableBody");
+        if (!tbody) { console.error("Additional Docs table body not found!"); return; }
+        tbody.innerHTML = "";
+
+        const docsArray = Array.isArray(veh.additionalDocuments) ? veh.additionalDocuments : [];
+
+        if (docsArray.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay documentos adicionales.</td></tr>';
+            return;
+        }
+
+        // Sort alphabetically by name for consistency
+        const sortedDocs = [...docsArray].sort((a, b) => (a?.name || '').localeCompare(b?.name || ''));
+
+        sortedDocs.forEach((doc) => {
+             if (!doc || typeof doc !== 'object' || doc.id === undefined || doc.id === null) return; // Skip invalid
+
+             const tr = document.createElement("tr");
+             const docId = doc.id;
+             const hasData = doc.base64Data && typeof doc.base64Data === 'string' && doc.base64Data.startsWith('data:');
+             const safeDocName = sanitizeFilename(doc.name || 'documento');
+             const safePlacas = sanitizeFilename(veh.placas || 'SIN_PLACAS');
+             const mimeType = hasData ? getMimeType(doc.base64Data) : '';
+             const extension = mimeType ? getFileExtensionFromMime(mimeType) : 'bin';
+             const downloadFileName = doc.fileName || `${safeDocName}_${safePlacas}.${extension}`;
+
+             tr.innerHTML = `
+                <td>${doc.name || 'Sin Nombre'}</td>
+                <td>${doc.fileName || '<span class="text-muted">No disponible</span>'}</td>
+                <td>
+                    ${hasData ? `
+                        <a href="${doc.base64Data}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm btn-icon" title="Ver Documento"> <i class="fas fa-eye"></i></a>
+                        <a href="${doc.base64Data}" download="${downloadFileName}" class="btn btn-info btn-sm btn-icon" title="Descargar Documento"> <i class="fas fa-download"></i></a>
+                    ` : `
+                        <button class="btn btn-secondary btn-sm btn-icon disabled" title="Archivo no cargado"><i class="fas fa-eye-slash"></i></button>
+                        <button class="btn btn-secondary btn-sm btn-icon disabled" title="Archivo no cargado"><i class="fas fa-download"></i></button>
+                    `}
+                    <button class="btn btn-danger btn-sm btn-icon" onclick="deleteAdditionalDoc('${docId}')" title="Eliminar Documento">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+             `;
+             tbody.appendChild(tr);
+        });
+    }
+
+     function addAdditionalDoc() {
+        if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+            showToast("Error: Vehículo no seleccionado.", "error"); return;
+        }
+        const veh = vehicles[currentVehicleIndex];
+        const nameInput = document.getElementById('newDocName');
+        const fileInput = document.getElementById('newDocFile');
+        const docName = nameInput ? nameInput.value.trim() : '';
+
+        if (!docName) { showToast("El nombre del documento es obligatorio.", "warning"); if(nameInput) nameInput.focus(); return; }
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) { showToast("Selecciona un archivo.", "warning"); return; }
+
+        const file = fileInput.files[0];
+        const maxSize = 5 * 1024 * 1024; // 5 MB
+        if (file.size > maxSize) { showToast(`Archivo muy grande (máx ${maxSize / 1024 / 1024} MB).`, "warning"); return; }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const base64Data = e.target.result;
+                if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) throw new Error("Invalid Base64");
+
+                if (!Array.isArray(veh.additionalDocuments)) veh.additionalDocuments = [];
+                veh.additionalDocuments.push({
+                    id: Date.now(),
+                    name: docName,
+                    fileName: file.name,
+                    base64Data: base64Data
+                });
+                saveToLocalStorage();
+                showToast(`Documento "${docName}" agregado.`, "success");
+                renderAdditionalDocsTable(veh); // Refresh table in modal
+                renderTable(); // Refresh main table icon count
+
+                // Clear form
+                if (nameInput) nameInput.value = '';
+                if (fileInput) fileInput.value = '';
+
+            } catch (err) {
+                 showToast("Error al procesar archivo. Ver consola.", "error");
+                 console.error("Error processing additional doc:", err);
+            }
+        };
+        reader.onerror = () => {
+            showToast("Error al leer archivo.", "error");
+             console.error("FileReader error event (additional doc):", reader.error);
+         };
+        reader.readAsDataURL(file);
+    }
+
+    function deleteAdditionalDoc(docId) {
+        if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
+            showToast("Error: Vehículo no seleccionado.", "error"); return;
+        }
+        const veh = vehicles[currentVehicleIndex];
+        if (!Array.isArray(veh.additionalDocuments)) { showToast("Error: No hay documentos adicionales.", "error"); return; }
+
+        const docIdNum = Number(docId);
+        const docIndex = veh.additionalDocuments.findIndex(doc => doc.id === docIdNum);
+
+        if (docIndex !== -1) {
+            const deletedName = veh.additionalDocuments[docIndex].name || 'Documento';
+            if (confirm(`¿Eliminar el documento "${deletedName}"?`)) {
+                veh.additionalDocuments.splice(docIndex, 1);
+                saveToLocalStorage();
+                renderAdditionalDocsTable(veh); // Refresh modal table
+                renderTable(); // Refresh main table icon count
+                showToast(`Documento "${deletedName}" eliminado.`, "info");
+            }
+        } else {
+            showToast("Error: No se encontró el documento.", "error");
+        }
+    }
+
+
+    // --- License Documents ---
+    function openLicenseDocModal(personIndex) {
+         if (personIndex === null || personIndex === undefined || personIndex < 0 || personIndex >= peopleLicenses.length || !peopleLicenses[personIndex]) {
+            showToast("Error al abrir doc. licencia.", "error"); return;
+         }
+        currentPersonIndex = personIndex;
+        const person = peopleLicenses[personIndex];
+        const titleEl = document.getElementById("licenseDocModalTitle");
+        const nameEl = document.getElementById("licenseDocName");
+        const docActionsDiv = document.getElementById("licenseDocActions");
+        const fileInput = document.getElementById("licenseDocFileInput");
+        if (!titleEl || !nameEl || !docActionsDiv || !fileInput) return;
+
+        titleEl.textContent = `Licencia de ${person.personName || 'N/A'}`;
+        nameEl.textContent = `${person.personName || 'N/A'}`;
+        docActionsDiv.innerHTML = "";
+        fileInput.value = "";
+
+        const base64Data = person.licenseBase64;
+        if (base64Data && typeof base64Data === 'string' && base64Data.startsWith('data:')) {
+            const mimeType = getMimeType(base64Data);
+            const extension = getFileExtensionFromMime(mimeType);
+            const safePersonName = sanitizeFilename(person.personName || 'SIN_NOMBRE');
+            const fileName = `Licencia_${safePersonName}.${extension}`;
+            docActionsDiv.innerHTML = `
+                 <a href="${base64Data}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-sm"> <i class="fas fa-eye"></i> Ver</a>
+                 <a href="${base64Data}" download="${fileName}" class="btn btn-info btn-sm" style="margin-left: 10px;"> <i class="fas fa-download"></i> Descargar</a>
+             `;
+        } else {
+            docActionsDiv.innerHTML = '<p class="text-muted">No hay licencia cargada.</p>';
+        }
+        openModal('licenseDocModalOverlay');
+    }
+
+    function uploadLicenseDoc() {
+        if (currentPersonIndex === null || currentPersonIndex < 0 || currentPersonIndex >= peopleLicenses.length || !peopleLicenses[currentPersonIndex]) {
+            showToast("Error: Conductor no seleccionado.", "error"); return;
+        }
+        const fileInput = document.getElementById("licenseDocFileInput");
+         if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            showToast("Selecciona un archivo.", "warning"); return;
+        }
+        const file = fileInput.files[0];
+         const maxSize = 5 * 1024 * 1024; // 5 MB
+         if (file.size > maxSize) {
+             showToast(`Archivo muy grande (máx ${maxSize / 1024 / 1024} MB).`, "warning"); return;
+         }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+           try {
+                const base64Data = e.target.result;
+                 if (!base64Data || typeof base64Data !== 'string' || !base64Data.startsWith('data:')) throw new Error("Invalid Base64");
+                peopleLicenses[currentPersonIndex].licenseBase64 = base64Data;
+                saveToLocalStorage();
+                showToast("Licencia subida.", "success");
+                renderLicensesTable(); // Update license list modal
+                openLicenseDocModal(currentPersonIndex); // Refresh current modal view
+           } catch (err) {
+                 showToast("Error al procesar archivo. Ver consola.", "error");
+                 console.error("Error processing license doc:", err);
+            }
+        };
+        reader.onerror = () => {
+            showToast("Error al leer archivo.", "error");
+            console.error("FileReader error event (license doc):", reader.error);
+        };
+        reader.readAsDataURL(file);
+    }
+
+
+    /* ========================================================================== */
+    /*  9. UPCOMING DEADLINES & CONSOLIDATED REPORT                               */
+    /* ========================================================================== */
+
+    function showProximosTramitesModal() {
+      let htmlContent = "";
+      let found = false;
+       const itemsList = []; // Collect items for the next checkDays
+       const checkDays = 60; // Use the default check window from isWithinDays
+       const checkDaysVerif = 30; // Verification uses a 30-day window for 'due' status in reports
+
+       vehicles.forEach((veh) => {
+            if (!veh || typeof veh !== 'object') return;
+            const marcaModelo = veh.marcaModelo || 'N/A';
+            const placas = veh.placas || 'N/A';
+            const vehicleIdentifier = `${marcaModelo} (${placas})`;
+
+            // Check Mantenimiento
+            const mantInfo = isWithinDays(veh.proximoMantenimiento, checkDays);
+             if (mantInfo.isNear && mantInfo.status !== 'future') {
+                 itemsList.push({ ...mantInfo, type: 'Mantenimiento', date: veh.proximoMantenimiento, vehicle: vehicleIdentifier });
+                 found = true;
+            }
+            // Check Cambio Placas
+             const placasChangeInfo = isWithinDays(veh.cambioPlacas, checkDays);
+             if (placasChangeInfo.isNear && placasChangeInfo.status !== 'future') {
+                 itemsList.push({ ...placasChangeInfo, type: 'Cambio Placas', date: veh.cambioPlacas, vehicle: vehicleIdentifier });
+                 found = true;
+             }
+            // Check Vencimiento Seguro
+             const seguroInfo = isWithinDays(veh.vencimientoSeguro, checkDays);
+             if (seguroInfo.isNear && seguroInfo.status !== 'future') {
+                 itemsList.push({ ...seguroInfo, type: 'Vence Seguro', date: veh.vencimientoSeguro, vehicle: vehicleIdentifier });
+                 found = true;
+             }
+            // Check Verificacion
+             const verifInfoRaw = getNextVerificationInfo(veh.placas, veh.lastVerificationDate);
+             // Only show if deadline is overdue or due (within 30 days), and not already completed
+             if ((verifInfoRaw.status === 'overdue' || verifInfoRaw.status === 'due') && verifInfoRaw.status !== 'completed') {
+                // Use the daysDiff calculated by getNextVerificationInfo (based on end date)
+                itemsList.push({ ...verifInfoRaw, type: `Verificación ${verifInfoRaw.text || ''}`, date: null, /* daysDiff already in verifInfoRaw */ vehicle: vehicleIdentifier });
+                found = true;
+             }
+        });
+
+        itemsList.sort((a, b) => (a.daysDiff === null || a.daysDiff === Infinity ? 9999 : a.daysDiff) - (b.daysDiff === null || b.daysDiff === Infinity ? 9999 : b.daysDiff));
+
+        if (!found) {
+            htmlContent = `<p class='text-muted text-center'>No hay trámites próximos o vencidos en los siguientes ${checkDays} días.</p>`;
+        } else {
+             htmlContent += `<ul style="list-style: none; padding-left: 0;">`;
+             itemsList.forEach(info => {
+                  let badgeClass = (info.status === 'overdue') ? 'badge-danger' : 'badge-warning';
+                  let icon = (info.status === 'overdue') ? '<i class="fas fa-exclamation-circle"></i> ' : '<i class="fas fa-clock"></i> ';
+                  let dateText = info.date ? ` - ${info.date}` : '';
+                  let statusText = '';
+                  if (info.daysDiff !== null && info.daysDiff !== Infinity) {
+                       if (info.daysDiff < 0) statusText = ` (${Math.abs(info.daysDiff)} día${Math.abs(info.daysDiff)!==1 ? 's':''} atr.)`;
+                       else if (info.daysDiff === 0) statusText = ' (Hoy)';
+                       else statusText = ` (en ${info.daysDiff} día${info.daysDiff!==1 ? 's':''})`;
+                  }
+                  // Use the specific text for verification, otherwise type + date
+                  const itemTypeText = info.type.startsWith('Verif') ? info.type : `${info.type}${dateText}`;
+                 htmlContent += `<li style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;"><strong>${info.vehicle}:</strong><br><span class="badge ${badgeClass}" style="margin-top: 5px;">${icon}${itemTypeText}${statusText}</span></li>`;
+             });
+             htmlContent = htmlContent.replace(/border-bottom: 1px solid #eee;(?=<\/li>\s*<\/ul>)/, ''); // Remove last border
+             htmlContent += '</ul>';
+        }
+
+      const tramitesContentDiv = document.getElementById("tramitesContent");
+      if (tramitesContentDiv) tramitesContentDiv.innerHTML = htmlContent;
+      // Update modal title to reflect the checkDays
+      const tramitesModalTitle = document.querySelector("#tramitesModal .modal-header h2");
+      if(tramitesModalTitle) tramitesModalTitle.innerHTML = `<i class="fas fa-calendar-check"></i> Próximos Trámites (Siguientes ${checkDays} días)`;
+      openModal('tramitesModalOverlay');
+    }
+
+    function printTramites() {
+      const tramitesDiv = document.getElementById("tramitesContent");
+      const checkDays = 60; // Match the modal window
+      if (!tramitesDiv) { showToast("Error al encontrar contenido.", "error"); return; }
+      const contentToPrint = tramitesDiv.innerHTML;
+      const printStyles = `<style> body { font-family: Arial, sans-serif; margin: 20px; font-size: 10pt; } h2 { text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; font-size: 14pt;} ul { list-style: none; padding-left: 0; } li { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; page-break-inside: avoid; } li:last-child { border-bottom: none; } strong { font-weight: bold; display: block; margin-bottom: 3px;} .badge { border: 1px solid #ccc; padding: 3px 6px; border-radius: 4px; display: inline-block; font-size: 9pt; white-space: nowrap; color: black; background-color: #eee;} .badge-danger { background-color: #dc3545 !important; color: white !important; border-color: #dc3545 !important;} .badge-warning { background-color: #ffc107 !important; color: black !important; border-color: #ffc107 !important;} @media print { body { margin: 15mm; } .badge-danger, .badge-warning { -webkit-print-color-adjust: exact; print-color-adjust: exact; } li { border-color: #ddd; } } i { margin-right: 5px; } p.text-muted { text-align: center; color: #6c757d; font-style: italic; } </style>`;
+      const fullHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Próximos Trámites - LEFIOS CARS</title>${printStyles}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><h2><i class="fas fa-calendar-check"></i> Próximos Trámites (${checkDays} días)</h2>${contentToPrint}</body></html>`;
+      openPrintWindow(fullHtml, "Próximos Trámites");
+    }
+
+    // Print Consolidated Deadline Report
+    function printConsolidatedReport() {
+        let htmlContent = "<h2><i class='fas fa-exclamation-triangle'></i> Reporte General de Vencimientos</h2>";
+        const itemsByVehicle = {}; // Group items by vehicle ID
+        const checkDaysReport = 60; // Wider window for the full report
+        const currentYear = new Date().getFullYear();
+        let foundItems = false;
+
+        vehicles.forEach((veh, index) => {
+             if (!veh || typeof veh !== 'object') return;
+             const vehicleId = veh.id;
+             itemsByVehicle[vehicleId] = {
+                name: `${veh.marcaModelo || 'N/A'} (${veh.placas || 'N/A'})`,
+                items: []
+             };
+
+             // Check Mantenimiento
+             const mantInfo = isWithinDays(veh.proximoMantenimiento, checkDaysReport);
+             if (mantInfo.isNear && mantInfo.status !== 'future') {
+                 itemsByVehicle[vehicleId].items.push({ ...mantInfo, type: 'Mantenimiento', date: veh.proximoMantenimiento });
+                 foundItems = true;
+             }
+             // Check Cambio Placas
+             const placasChangeInfo = isWithinDays(veh.cambioPlacas, checkDaysReport);
+             if (placasChangeInfo.isNear && placasChangeInfo.status !== 'future') {
+                 itemsByVehicle[vehicleId].items.push({ ...placasChangeInfo, type: 'Cambio Placas', date: veh.cambioPlacas });
+                 foundItems = true;
+             }
+             // Check Vencimiento Seguro
+             const seguroInfo = isWithinDays(veh.vencimientoSeguro, checkDaysReport);
+             if (seguroInfo.isNear && seguroInfo.status !== 'future') {
+                 itemsByVehicle[vehicleId].items.push({ ...seguroInfo, type: 'Vence Seguro', date: veh.vencimientoSeguro });
+                 foundItems = true;
+             }
+             // Check Verificacion (Show only if not completed and deadline is due/overdue)
+             const verifInfoRaw = getNextVerificationInfo(veh.placas, veh.lastVerificationDate);
+             if ((verifInfoRaw.status === 'due' || verifInfoRaw.status === 'overdue') && verifInfoRaw.status !== 'completed') {
+                 itemsByVehicle[vehicleId].items.push({ ...verifInfoRaw, type: `Verificación`, date: null }); // Date is implicit in period text
+                 foundItems = true;
+             }
+             // Check Refrendo
+             if (!veh.refrendoAnioPagado || (veh.refrendoAnioPagado && veh.refrendoAnioPagado < currentYear)) {
+                  itemsByVehicle[vehicleId].items.push({
+                      type: `Refrendo`,
+                      text: `Pendiente (Último: ${veh.refrendoAnioPagado || 'N/P'})`, // Add descriptive text
+                      status: 'overdue',
+                      daysDiff: -365, // Arbitrary large negative for sorting
+                      date: null,
+                      isNear: true
+                  });
+                 foundItems = true;
+             }
+
+             // Sort items for this vehicle by urgency (daysDiff)
+             itemsByVehicle[vehicleId].items.sort((a, b) => (a.daysDiff === null || a.daysDiff === Infinity ? 9999 : a.daysDiff) - (b.daysDiff === null || b.daysDiff === Infinity ? 9999 : b.daysDiff));
+        });
+
+        if (!foundItems) {
+             htmlContent += "<p style='text-align: center; font-style: italic;'>No se encontraron vencimientos próximos o atrasados.</p>";
+        } else {
+            htmlContent += "<table style='width:100%; border-collapse:collapse; margin-top: 15px;'><thead><tr style='background:#eee;'><th style='border:1px solid #ccc; padding:6px;'>Vehículo</th><th style='border:1px solid #ccc; padding:6px;'>Trámite/Servicio</th><th style='border:1px solid #ccc; padding:6px;'>Fecha/Periodo Límite</th><th style='border:1px solid #ccc; padding:6px;'>Estado</th></tr></thead><tbody>";
+            // Sort vehicles with items alphabetically
+             Object.keys(itemsByVehicle)
+                 .map(id => itemsByVehicle[id])
+                 .filter(vehInfo => vehInfo.items.length > 0)
+                 .sort((a, b) => a.name.localeCompare(b.name))
+                 .forEach(vehInfo => {
+                     vehInfo.items.forEach((item, itemIndex) => {
+                         let statusText = '';
+                         let statusStyle = 'color: black;';
+                         let daysSuffix = '';
+
+                         if (item.daysDiff !== null && item.daysDiff !== Infinity) {
+                              if (item.daysDiff < 0) daysSuffix = ` (${Math.abs(item.daysDiff)} d)`;
+                              else if (item.daysDiff === 0) daysSuffix = ` (Hoy)`;
+                              else daysSuffix = ` (en ${item.daysDiff} d)`;
+                         }
+
+                         if (item.status === 'overdue') {
+                             statusText = `Atrasado${daysSuffix}`;
+                             statusStyle = 'color: red; font-weight: bold;';
+                         } else if (item.status === 'due') {
+                              statusText = `Próximo${daysSuffix}`;
+                              statusStyle = 'color: darkorange; font-weight: bold;'; // Darker orange
+                         } else {
+                              statusText = item.status; // Fallback
+                         }
+
+                         const vehicleCell = itemIndex === 0 ? `<td style="border:1px solid #ccc; padding:6px; vertical-align: top;" rowspan="${vehInfo.items.length}">${vehInfo.name}</td>` : '';
+                         // Use item.text if available (esp. for Verification/Refrendo), otherwise item.date
+                         const dateOrPeriod = item.text && (item.type.includes('Verif') || item.type.includes('Refrendo')) ? item.text : (item.date || 'N/A');
+
+                         htmlContent += `
+                            <tr>
+                                ${vehicleCell}
+                                <td style="border:1px solid #ccc; padding:6px;">${item.type}</td>
+                                <td style="border:1px solid #ccc; padding:6px;">${dateOrPeriod}</td>
+                                <td style="border:1px solid #ccc; padding:6px; ${statusStyle}">${statusText}</td>
+                            </tr>
+                         `;
+                     });
+                 });
+            htmlContent += "</tbody></table>";
+        }
+
+        openPrintWindow(htmlContent, "Reporte General Vencimientos");
+    }
+
+
+    /* ========================================================================== */
+    /*  10. PRINTING (Generic & Summary)                                        */
+    /* ========================================================================== */
+
+    function openPrintWindow(htmlContent, title = "Imprimir") {
+      const isFullHtml = typeof htmlContent === 'string' && htmlContent.trim().toLowerCase().startsWith('<!doctype html') || htmlContent.trim().toLowerCase().startsWith('<html');
+      let printWindow;
+      try {
+         printWindow = window.open("", "_blank", "width=800,height=600,scrollbars=yes,resizable=yes");
+         if (!printWindow) throw new Error("Popup blocked");
+      } catch (e) {
+          showToast("Error al abrir ventana de impresión. Revisa bloqueadores de pop-ups.", "error");
+          console.error("Print window error:", e); return;
+      }
+
+      try {
+          printWindow.document.open();
+          if (isFullHtml) {
+              printWindow.document.write(htmlContent);
+          } else {
+              // Wrap content fragment
+              printWindow.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>${title} - LEFIOS CARS</title><style>body{font-family:Arial,sans-serif;margin:25px;font-size:10pt}h2,h3{margin-top:1.2em;margin-bottom:0.6em;padding-bottom:5px;border-bottom:1px solid #ccc;page-break-after:avoid;color:#333}h2{font-size:14pt}h3{font-size:12pt}table{width:100%;border-collapse:collapse;margin-top:10px;page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}thead{display:table-header-group}th,td{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top;word-wrap:break-word}th{background-color:#f2f2f2;font-weight:bold;color:#000}p{margin:5px 0 10px 0;line-height:1.4}ul{margin-top:0;padding-left:25px}li{margin-bottom:5px}hr{border:none;border-top:1px dashed #ccc;margin:20px 0}@media print{body{font-size:9pt;margin:15mm}h2,h3{border-bottom:1px solid #999;color:#000}th,td{border:1px solid #999;padding:5px}th{background-color:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}a{text-decoration:none;color:inherit}p,li{orphans:3;widows:3}}</style><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body>${htmlContent}</body></html>`);
+          }
+          printWindow.document.close();
+
+           setTimeout(() => { // Ensure rendering before print command
+                try {
+                    printWindow.focus();
+                    printWindow.print();
+                    // Consider leaving the window open for the user to close manually
+                    // printWindow.close();
+                } catch (printErr) {
+                    showToast("Error al ejecutar impresión.", "error");
+                    console.error("printWindow.print() error:", printErr);
+                    try { if (!printWindow.closed) printWindow.close(); } catch(e){}
+                }
+           }, 750);
+
+      } catch (e) {
+            showToast("Error al preparar ventana de impresión.", "error");
+            console.error("Error writing to print window:", e);
+            try { if (printWindow && !printWindow.closed) printWindow.close(); } catch (closeErr) {}
+      }
+    }
+
+    function printVehicleSummary(index) {
+      if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+           showToast("Error: Vehículo no válido.", "error"); return;
+      }
+      const veh = vehicles[index];
+      const fallasArray = Array.isArray(veh.fallas) ? veh.fallas : [];
+      const mantosArray = Array.isArray(veh.mantenimientos) ? veh.mantenimientos : [];
+      const additionalDocsArray = Array.isArray(veh.additionalDocuments) ? veh.additionalDocuments : [];
+      const verifInfo = getNextVerificationInfo(veh.placas, veh.lastVerificationDate); // Get verification status
+
+      // --- Fallas ---
+      let fallasHTML = "<h3><i class=\"fas fa-wrench\"></i> Fallas</h3><ul>";
+      if (fallasArray.length > 0) {
+         [...fallasArray].sort((a, b) => (a?.fechaFalla || '9').localeCompare(b?.fechaFalla || '9')).forEach(f => { // Asc
+            if (f && typeof f === 'object') fallasHTML += `<li>${f.fechaFalla ? `<strong>${f.fechaFalla}:</strong> ` : ""}${f.descripcion || 'N/A'}</li>`;
+         });
+      } else { fallasHTML += "<li>No hay fallas registradas.</li>"; }
+      fallasHTML += "</ul>";
+
+      // --- Maintenance ---
+      let mantoHTML = "<h3><i class=\"fas fa-tools\"></i> Mantenimientos</h3>";
+      if (mantosArray.length > 0) {
+        mantoHTML += `<table><thead><tr><th>Fecha</th><th>Km</th><th>Próximo</th></tr></thead><tbody>`;
+        [...mantosArray].sort((a, b) => (a?.fechaManto || '9').localeCompare(b?.fechaManto || '9')).forEach(m => { // Asc
+            if (m && typeof m === 'object') mantoHTML += `<tr><td>${m.fechaManto||"N/A"}</td><td>${m.kilometraje||"N/A"}</td><td>${m.proximoCambio||"N/A"}</td></tr>`;
+        });
+        mantoHTML += "</tbody></table>";
+      } else { mantoHTML += "<p>No hay mantenimientos registrados.</p>"; }
+
+       // --- Additional Documents ---
+      let additionalDocsHTML = "<h3><i class=\"fas fa-folder-open\"></i> Documentos Adicionales</h3><ul>";
+      if (additionalDocsArray.length > 0) {
+         [...additionalDocsArray].sort((a, b) => (a?.name || '').localeCompare(b?.name || '')).forEach(doc => { // Sort by name
+            if (doc && typeof doc === 'object') {
+                additionalDocsHTML += `<li>${doc.name || 'Sin Nombre'} ${doc.fileName ? `(${doc.fileName})` : ''}</li>`;
+            }
+         });
+      } else { additionalDocsHTML += "<li>No hay documentos adicionales registrados.</li>"; }
+      additionalDocsHTML += "</ul>";
+
+      // Format verification status for print
+      let verifStatusPrint = verifInfo.text || 'N/A';
+      if (verifInfo.status === 'overdue') verifStatusPrint += ' (Atrasado)';
+      else if (verifInfo.isInCurrentPeriod && verifInfo.status !== 'completed') verifStatusPrint += ' (En Periodo)';
+      else if (verifInfo.status === 'completed') verifStatusPrint += ' (Completado)';
+
+
+      const summaryHTML = `
+          <h2><i class="fas fa-car"></i> Resumen: ${veh.marcaModelo || 'N/A'} (${veh.placas || 'N/A'})</h2>
+          <table style="width:100%; border-collapse:collapse;">
+            <tr><td style="width:30%; border:1px solid #ccc; padding: 5px;"><strong>Modelo (Específico):</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.modelo || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Año:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.año || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Color:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.color || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Num. Serie:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.numeroSerie || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Fecha Adquisición:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.fechaAdquisicion || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Kilometraje:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.kilometraje || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Próx. Mantenimiento:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.proximoMantenimiento || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Próx. Cambio Placas:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.cambioPlacas || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Vencimiento Seguro:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.vencimientoSeguro || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Aseguradora:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.aseguradora || 'N/A'} (${veh.telefono || 'N/A'})</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Último Refrendo:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.refrendoAnioPagado || 'N/P'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Verificación:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${verifStatusPrint}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Última Verificación Realizada:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.lastVerificationDate || 'N/A'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Póliza:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.polizaBase64 ? 'Cargada' : 'No Cargada'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Tarjeta Circulación:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.tarjetaCirculacionBase64 ? 'Cargada' : 'No Cargada'}</td></tr>
+          </table>
+          <h3><i class="fas fa-info-circle"></i> Observaciones</h3>
+          <p style="padding-left: 15px; font-style: italic;">${veh.observaciones ? veh.observaciones.replace(/\n/g, '<br>') : 'Ninguna'}</p>
+          <hr>
+          ${mantoHTML}
+          <hr>
+          ${fallasHTML}
+          <hr>
+          ${additionalDocsHTML}
+      `;
+      openPrintWindow(summaryHTML, `Resumen - ${veh.marcaModelo || 'Vehículo'}`);
+    }
+
+
+    /* ========================================================================== */
+    /*  11. STATES & LINKS MANAGEMENT                                             */
+    /* ========================================================================== */
+
+    function openStatesLinksModal() {
+        renderStatesLinks();
+        openModal('statesLinksModalOverlay');
+    }
+
+    function renderStatesLinks() {
+      const container = document.getElementById("statesContainer");
+      if (!container) { console.error("States container not found!"); return; }
+      container.innerHTML = "";
+      const statesArray = Array.isArray(statesData) ? statesData : [];
+
+      if (statesArray.length === 0) {
+          container.innerHTML = '<p class="text-muted text-center">No hay estados definidos.</p>';
+          return;
+      }
+
+      statesArray.forEach((st, stIndex) => {
+         if (!st || typeof st !== 'object' || st.id === undefined || st.id === null) return; // Skip invalid
+         const stateId = st.id;
+         const stateDiv = document.createElement("div");
+         stateDiv.className = "state-block";
+         stateDiv.setAttribute('data-state-id', stateId);
+         stateDiv.innerHTML = `
+            <div class="state-header">
+                 <input type="text" value="${st.stateName || ''}" onchange="updateStateName(${stIndex}, this.value)" placeholder="Nombre Estado" aria-label="Nombre del Estado">
+                 <button class="btn btn-danger btn-sm btn-icon" onclick="deleteState(${stIndex})" title="Eliminar Estado"><i class="fas fa-trash-alt"></i></button>
+            </div>
+            <ul id="stateLinks-${stateId}" class="link-list"></ul>
+            <button class="btn btn-success btn-sm mt-1" onclick="addStateLink(${stIndex})"><i class="fas fa-plus"></i> Link a ${st.stateName || 'estado'}</button>
+         `;
+         container.appendChild(stateDiv);
+         const ul = stateDiv.querySelector(`#stateLinks-${stateId}`);
+         if (!ul) return; // Skip rendering links if UL not found
+
+         if (!Array.isArray(st.links)) st.links = [];
+         const linksArray = st.links;
+         if (linksArray.length === 0) {
+            ul.innerHTML = '<li class="text-muted" style="padding: 5px 0;">No hay links.</li>';
+         } else {
+            linksArray.forEach((linkObj, linkIndex) => {
+                 if (!linkObj || typeof linkObj !== 'object' || linkObj.id === undefined || linkObj.id === null) return; // Skip invalid link
+                 const linkId = linkObj.id;
+                 const li = document.createElement("li");
+                 li.className = "link-item";
+                 li.setAttribute('data-link-id', linkId);
+                 li.innerHTML = `
+                     <input type="text" class="form-control form-control-sm" style="flex-basis: 180px;" placeholder="Descripción" value="${linkObj.label || ''}" onchange="updateStateLinkLabel(${stIndex}, ${linkIndex}, this.value)" aria-label="Desc Link" />
+                     <input type="text" class="form-control form-control-sm" style="flex-basis: 300px;" placeholder="URL (https://...)" value="${linkObj.url || ''}" onchange="updateStateLinkUrl(${stIndex}, ${linkIndex}, this.value)" aria-label="URL Link" />
+                     <a href="${linkObj.url || '#'}" target="_blank" rel="noopener noreferrer" class="btn btn-info btn-sm btn-icon ${!linkObj.url ? 'disabled' : ''}" title="Abrir Link"><i class="fas fa-external-link-alt"></i></a>
+                     <button class="btn btn-danger btn-sm btn-icon" onclick="deleteStateLink(${stIndex}, ${linkIndex})" title="Eliminar Link"><i class="fas fa-times"></i></button>
+                 `;
+                 ul.appendChild(li);
+            });
+         }
+      });
+    }
+
+    function addState() {
+      const name = prompt("Nombre del nuevo Estado:");
+      if (name && name.trim()) {
+        if (!Array.isArray(statesData)) statesData = [];
+        statesData.push({ id: Date.now(), stateName: name.trim(), links: [] });
+        saveToLocalStorage();
+        renderStatesLinks();
+         showToast(`Estado "${name.trim()}" agregado.`, "success");
+      } else if (name !== null) showToast("Nombre vacío.", "warning");
+    }
+
+     function updateStateName(stIndex, newName) {
+        if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex]) return;
+        const trimmedName = newName.trim();
+        if (trimmedName) {
+             statesData[stIndex].stateName = trimmedName;
+             saveToLocalStorage();
+             const stateBlock = document.querySelector(`.state-block[data-state-id="${statesData[stIndex].id}"]`);
+             if (stateBlock) { // Update button text dynamically
+                 const addLinkBtn = stateBlock.querySelector('.btn-success');
+                 if (addLinkBtn) addLinkBtn.innerHTML = `<i class="fas fa-plus"></i> Link a ${trimmedName}`;
+             }
+        } else {
+            showToast("Nombre vacío.", "warning");
+            const stateBlock = document.querySelector(`.state-block[data-state-id="${statesData[stIndex].id}"]`);
+             if (stateBlock) { // Revert input visually
+                 const nameInput = stateBlock.querySelector('.state-header input[type="text"]');
+                 if (nameInput) nameInput.value = statesData[stIndex].stateName;
+             }
+        }
+    }
+
+    function deleteState(stIndex) {
+      if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex]) return;
+      const stateName = statesData[stIndex].stateName || "estado";
+      if (confirm(`¿Eliminar Estado "${stateName}" y sus links?`)) {
+        const deletedName = statesData[stIndex].stateName;
+        statesData.splice(stIndex, 1);
+        saveToLocalStorage();
+        renderStatesLinks();
+        showToast(`Estado "${deletedName}" eliminado.`, "info");
+      }
+    }
+
+    function addStateLink(stIndex) {
+       if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex]) return;
+        if (!Array.isArray(statesData[stIndex].links)) statesData[stIndex].links = [];
+      statesData[stIndex].links.push({ id: Date.now(), label: "", url: "" });
+      saveToLocalStorage();
+      renderStatesLinks();
+    }
+
+    function deleteStateLink(stIndex, linkIndex) {
+       if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex] || !Array.isArray(statesData[stIndex].links) || linkIndex < 0 || linkIndex >= statesData[stIndex].links.length || !statesData[stIndex].links[linkIndex]) return;
+      statesData[stIndex].links.splice(linkIndex, 1);
+      saveToLocalStorage();
+      renderStatesLinks();
+      showToast("Link eliminado.", "info");
+    }
+
+    function updateStateLinkLabel(stIndex, linkIndex, newVal) {
+       if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex] || !Array.isArray(statesData[stIndex].links) || linkIndex < 0 || linkIndex >= statesData[stIndex].links.length || !statesData[stIndex].links[linkIndex]) return;
+      statesData[stIndex].links[linkIndex].label = newVal.trim();
+      saveToLocalStorage();
+    }
+
+    function updateStateLinkUrl(stIndex, linkIndex, newVal) {
+       if (!Array.isArray(statesData) || stIndex < 0 || stIndex >= statesData.length || !statesData[stIndex] || !Array.isArray(statesData[stIndex].links) || linkIndex < 0 || linkIndex >= statesData[stIndex].links.length || !statesData[stIndex].links[linkIndex]) return;
+       const trimmedUrl = newVal.trim();
+       statesData[stIndex].links[linkIndex].url = trimmedUrl;
+       saveToLocalStorage();
+       // Update button state dynamically
+       const stateId = statesData[stIndex].id;
+       const linkId = statesData[stIndex].links[linkIndex].id;
+       const linkElement = document.querySelector(`.state-block[data-state-id="${stateId}"] .link-item[data-link-id="${linkId}"]`);
+       if (linkElement) {
+           const openBtn = linkElement.querySelector('a.btn-info');
+           if (openBtn) {
+               openBtn.href = trimmedUrl || '#';
+               if (trimmedUrl) openBtn.classList.remove('disabled');
+               else openBtn.classList.add('disabled');
+           }
+       }
+    }
+
+    /* ========================================================================== */
+    /*  12. DRIVER LICENSES MANAGEMENT                                            */
+    /* ========================================================================== */
+
+    function openLicensesModal() {
+        renderLicensesTable();
+        openModal('licensesModalOverlay');
+    }
+
+    function renderLicensesTable() {
+      const tbody = document.getElementById("licensesTableBody");
+      if (!tbody) { console.error("Licenses table body not found!"); return; }
+      tbody.innerHTML = "";
+       const peopleArray = Array.isArray(peopleLicenses) ? peopleLicenses : [];
+
+       if (peopleArray.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hay conductores registrados.</td></tr>';
+          return;
+      }
+       // Sort people by name
+       const sortedPeople = [...peopleArray].sort((a,b) => (a?.personName || '').localeCompare(b?.personName || ''));
+
+      sortedPeople.forEach((person) => {
+         // Find original index after sorting for correct updates/deletes
+         const originalIndex = peopleLicenses.findIndex(p => p.id === person.id);
+          if (originalIndex === -1 || !person || typeof person !== 'object' || person.id === undefined || person.id === null) return; // Skip invalid
+
+         const personId = person.id;
+         const tr = document.createElement("tr");
+         tr.setAttribute('data-person-id', personId);
+         const hasLicense = person.licenseBase64 && typeof person.licenseBase64 === 'string' && person.licenseBase64.startsWith('data:');
+
+         tr.innerHTML = `
+          <td><input type="text" class="form-control form-control-sm" value="${person.personName || ''}" placeholder="Nombre conductor" onchange="updatePersonName(${originalIndex}, this.value)" aria-label="Nombre Conductor"></td>
+          <td class="text-center">${hasLicense ? '<span class="badge badge-success"><i class="fas fa-check"></i> Cargada</span>' : '<span class="badge badge-secondary"><i class="fas fa-times"></i> Sin Cargar</span>'}</td>
+          <td class="text-center">
+            <button class="btn btn-info btn-sm" onclick="openLicenseDocModal(${originalIndex})" title="${hasLicense ? 'Ver/Actualizar Licencia' : 'Subir Licencia'}"><i class="fas ${hasLicense ? 'fa-eye' : 'fa-upload'}"></i> ${hasLicense ? 'Ver/Act.' : 'Subir'}</button>
+            <button class="btn btn-danger btn-sm btn-icon" onclick="deletePerson(${originalIndex})" title="Eliminar Conductor"><i class="fas fa-user-minus"></i></button>
+          </td>
+         `;
+         tbody.appendChild(tr);
+      });
+    }
+
+    function addPerson() {
+        const newName = prompt("Nombre del nuevo conductor:", "");
+        if (newName && newName.trim()) {
+            if (!Array.isArray(peopleLicenses)) peopleLicenses = [];
+            peopleLicenses.push({ id: Date.now(), personName: newName.trim(), licenseBase64: "" });
+            saveToLocalStorage();
+            renderLicensesTable();
+            showToast(`Conductor "${newName.trim()}" agregado.`, "success");
+        } else if (newName !== null) showToast("Nombre vacío.", "warning");
+    }
+
+    function deletePerson(index) {
+        if (!Array.isArray(peopleLicenses) || index < 0 || index >= peopleLicenses.length || !peopleLicenses[index]) return;
+        const personName = peopleLicenses[index].personName || "conductor";
+         if (confirm(`¿Eliminar conductor "${personName}"?`)) {
+            const deletedName = peopleLicenses[index].personName;
+            peopleLicenses.splice(index, 1);
+            saveToLocalStorage();
+            renderLicensesTable();
+            showToast(`Conductor "${deletedName}" eliminado.`, "info");
+        }
+    }
+
+    function updatePersonName(index, newVal) {
+      if (!Array.isArray(peopleLicenses) || index < 0 || index >= peopleLicenses.length || !peopleLicenses[index]) return;
+      const trimmedName = newVal.trim();
+       if (trimmedName) {
+           peopleLicenses[index].personName = trimmedName;
+           saveToLocalStorage();
+       } else {
+            showToast("Nombre vacío.", "warning");
+             const personId = peopleLicenses[index].id; // Revert input visually
+             const input = document.querySelector(`#licensesTableBody tr[data-person-id="${personId}"] input[type="text"]`);
+            if (input) input.value = peopleLicenses[index].personName;
+       }
+    }
+
+    /* ========================================================================== */
+    /*  13. IMPORT / EXPORT (CSV)                                                 */
+    /* ========================================================================== */
+
+    function openImportModal() {
+        // Clear previous results
+        const importResult = document.getElementById('importResult');
+        if (importResult) importResult.innerHTML = '';
+        const importFile = document.getElementById('importFile');
+        if(importFile) importFile.value = ''; // Clear file input
+
+        openModal('importModalOverlay');
+    }
+
+    function handleImport() {
+        const fileInput = document.getElementById('importFile');
+        const resultDiv = document.getElementById('importResult');
+        if (!resultDiv) return;
+        resultDiv.innerHTML = 'Procesando archivo...'; // Feedback
+
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            resultDiv.innerHTML = '<span style="color: var(--danger-color);">Por favor, selecciona un archivo CSV.</span>';
+            return;
+        }
+        const file = fileInput.files[0];
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+             resultDiv.innerHTML = '<span style="color: var(--danger-color);">El archivo debe ser de tipo CSV.</span>';
+             return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const text = e.target.result;
+            let addedCount = 0;
+            let errorCount = 0;
+            const errors = [];
+
+            try {
+                const lines = text.split(/\r\n|\n|\r/);
+                if (lines.length <= 1) {
+                     resultDiv.innerHTML = '<span style="color: var(--warning-color);">El archivo CSV está vacío o solo contiene encabezado.</span>';
+                     return;
+                }
+
+                // Define expected header order (case-insensitive compare)
+                 const expectedHeaders = ["MarcaModelo", "Modelo", "Año", "Color", "Placas", "NumeroSerie", "FechaAdquisicion", "Kilometraje", "ProximoMantenimiento", "CambioPlacas", "VencimientoSeguro", "Aseguradora", "TelefonoSeguro", "RefrendoAnioPagado", "Observaciones", "LastVerificationDate"];
+                 const headerLineRaw = lines[0].trim();
+                 // Basic CSV split - ASSUMES NO COMMAS WITHIN QUOTED FIELDS for header
+                 const headerLine = headerLineRaw.split(',').map(h => h.trim().toLowerCase());
+
+                 // Header validation
+                 let headerMismatch = false;
+                 if (headerLine.length < expectedHeaders.length) { // Must have all columns
+                     errors.push(`Encabezado: Número de columnas (${headerLine.length}) incorrecto, se esperaban ${expectedHeaders.length}.`);
+                     headerMismatch = true;
+                 } else {
+                     for(let h=0; h < expectedHeaders.length; h++) {
+                         if (headerLine[h] !== expectedHeaders[h].toLowerCase()) {
+                             errors.push(`Encabezado: Columna ${h+1} esperada "${expectedHeaders[h]}", encontrada "${headerLineRaw.split(',')[h].trim()}".`);
+                             headerMismatch = true;
+                         }
+                     }
+                 }
+
+                 if (headerMismatch) {
+                     errorCount++; // Count header error as one row error
+                     // Decide whether to stop or continue
+                     // For now, we log the error and attempt to process rows anyway, assuming the order might be right despite names
+                     console.warn("CSV Header mismatch detected. Attempting to process rows based on column order.", errors);
+                     resultDiv.innerHTML = '<span style="color: var(--warning-color);">Advertencia: El encabezado del CSV no coincide exactamente con el esperado. Se intentará procesar por orden de columna. Ver consola (F12) para detalles.</span><br>';
+                 } else {
+                     resultDiv.innerHTML = '<span style="color: var(--info-color);">Encabezado validado. Procesando filas...</span><br>';
+                 }
+
+
+                // Start from line 1 (skip header)
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue; // Skip empty lines
+
+                    // Basic CSV split - ASSUMES NO COMMAS WITHIN QUOTED FIELDS
+                    // This is a limitation. A proper parser would handle quotes.
+                    const data = line.split(',');
+
+                    if (data.length !== expectedHeaders.length) {
+                        errors.push(`Línea ${i + 1}: Número de columnas (${data.length}) incorrecto, se esperaban ${expectedHeaders.length}. Fila ignorada.`);
+                        errorCount++;
+                        continue; // Skip this row
+                    }
+
+                    // --- VALIDATION: Only MarcaModelo is truly required ---
+                    const marcaModelo = data[0]?.trim();
+                    if (!marcaModelo) {
+                        errors.push(`Línea ${i + 1}: MarcaModelo (columna 1) es obligatorio. Fila ignorada.`);
+                        errorCount++;
+                        continue; // Skip this row
+                    }
+
+                    // Temporary object to hold parsed data and track row-specific errors
+                    let rowErrors = [];
+                    const newVehicle = {
+                        id: Date.now() + i, // Simple unique ID generation
+                        marcaModelo: marcaModelo,
+                        modelo: data[1]?.trim() || '',
+                        año: parseInt(data[2]?.trim()) || null,
+                        color: data[3]?.trim() || '',
+                        placas: data[4]?.trim() || '', // Allow empty
+                        numeroSerie: data[5]?.trim() || '',
+                        fechaAdquisicion: data[6]?.trim() || null,
+                        kilometraje: data[7]?.trim() || '',
+                        proximoMantenimiento: data[8]?.trim() || null,
+                        cambioPlacas: data[9]?.trim() || null,
+                        vencimientoSeguro: data[10]?.trim() || null,
+                        aseguradora: data[11]?.trim() || '',
+                        telefono: data[12]?.trim() || '',
+                        refrendoAnioPagado: parseInt(data[13]?.trim()) || null,
+                        observaciones: data[14]?.trim() || '',
+                        lastVerificationDate: data[15]?.trim() || null, // Get optional 16th column
+                        // Initialize empty arrays/docs
+                        fallas: [],
+                        mantenimientos: [],
+                        additionalDocuments: [],
+                        polizaBase64: "",
+                        tarjetaCirculacionBase64: ""
+                    };
+
+                     // Basic date format check for provided dates, log error but keep null/original value
+                     if (newVehicle.fechaAdquisicion && !isValidDateString(newVehicle.fechaAdquisicion)){ rowErrors.push(`Formato Fecha Adquisición inválido (${newVehicle.fechaAdquisicion})`); newVehicle.fechaAdquisicion = null; }
+                     if (newVehicle.proximoMantenimiento && !isValidDateString(newVehicle.proximoMantenimiento)){ rowErrors.push(`Formato Próx Manto inválido (${newVehicle.proximoMantenimiento})`); newVehicle.proximoMantenimiento = null; }
+                     if (newVehicle.cambioPlacas && !isValidDateString(newVehicle.cambioPlacas)){ rowErrors.push(`Formato Cambio Placas inválido (${newVehicle.cambioPlacas})`); newVehicle.cambioPlacas = null; }
+                     if (newVehicle.vencimientoSeguro && !isValidDateString(newVehicle.vencimientoSeguro)){ rowErrors.push(`Formato Vencimiento Seguro inválido (${newVehicle.vencimientoSeguro})`); newVehicle.vencimientoSeguro = null; }
+                     if (newVehicle.lastVerificationDate && !isValidDateString(newVehicle.lastVerificationDate)){ rowErrors.push(`Formato Última Verificación inválido (${newVehicle.lastVerificationDate})`); newVehicle.lastVerificationDate = null; }
+
+                     // Check year/refrendo format
+                     if (data[2]?.trim() && isNaN(newVehicle.año)) { rowErrors.push(`Formato Año inválido (${data[2]?.trim()})`); newVehicle.año = null; }
+                     if (data[13]?.trim() && isNaN(newVehicle.refrendoAnioPagado)) { rowErrors.push(`Formato Refrendo inválido (${data[13]?.trim()})`); newVehicle.refrendoAnioPagado = null; }
+
+
+                     // If errors specific to this row, log them but still add the vehicle
+                    if (rowErrors.length > 0) {
+                        errors.push(`Línea ${i + 1} (${marcaModelo}): ${rowErrors.join(', ')}.`);
+                        // Don't increment errorCount here if we still add the vehicle, it's a warning
+                    }
+
+                    vehicles.push(newVehicle);
+                    addedCount++;
+
                 } // End for loop
 
                 // --- Save and Render ONLY if vehicles were added ---
