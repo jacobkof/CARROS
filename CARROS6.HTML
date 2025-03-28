@@ -33,8 +33,10 @@
       --verif-overdue-text: #721c24;
       --verif-due-bg: #fff3cd;
       --verif-due-text: #856404;
-      --verif-ok-bg: #d4edda; /* Optional: For future/valid */
-      --verif-ok-text: #155724; /* Optional */
+      --verif-ok-bg: #d4edda; /* Used for 'Verified this period' */
+      --verif-ok-text: #155724;
+      --verif-future-bg: transparent; /* For future, no special bg */
+      --verif-future-text: var(--text-color);
     }
 
     * {
@@ -213,7 +215,15 @@
     tr:hover {
       background-color: #e9ecef; /* More noticeable hover */
     }
-    td .btn { margin-right: 3px; margin-bottom: 3px;} /* Space between buttons in cells */
+    /* Space between buttons in cells - Adjusted for new buttons */
+    td .btn, td button {
+      margin-right: 3px;
+      margin-bottom: 3px;
+      margin-top: 2px; /* Add some top margin for stacked buttons */
+    }
+    td .btn-icon { /* Make icon buttons slightly more compact */
+        padding: 0.3rem 0.5rem;
+    }
 
     .vehicle-details-link {
       color: var(--primary-color);
@@ -227,8 +237,21 @@
     /* Verification Cell Highlighting */
     td.verif-overdue { background-color: var(--verif-overdue-bg); color: var(--verif-overdue-text); font-weight: 500;}
     td.verif-due { background-color: var(--verif-due-bg); color: var(--verif-due-text); font-weight: 500;}
-    td.verif-ok { /* Optional styling for non-urgent */ }
-
+    td.verif-ok { background-color: var(--verif-ok-bg); color: var(--verif-ok-text); } /* Verified */
+    td.verif-future { background-color: var(--verif-future-bg); color: var(--verif-future-text); } /* Future, no highlight */
+    td.verif-nodate, td.verif-invalid, td.verif-error { /* Optional: subtle style for N/A */
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    .verification-cell { /* Container for text and button */
+        display: flex;
+        flex-direction: column; /* Stack text and button */
+        gap: 4px; /* Space between text and button */
+        align-items: flex-start; /* Align button to the left */
+    }
+    .verification-cell .btn-sm {
+        align-self: flex-start; /* Ensure button doesn't stretch */
+    }
 
     /* === Badges de Estado/Alerta === */
     .badge {
@@ -553,6 +576,14 @@
         #addDocForm { flex-direction: column; align-items: stretch; }
         #addDocForm .form-group { flex-basis: auto !important; }
         #addDocForm button { margin-top: 10px; }
+        /* Adjust verification cell on small screens */
+        .verification-cell {
+            align-items: stretch; /* Make button full width */
+        }
+        .verification-cell .btn-sm {
+             align-self: stretch;
+             text-align: center;
+        }
     }
 
   </style>
@@ -568,7 +599,6 @@
     <!-- Action Bar -->
     <div class="action-bar">
         <div class="action-buttons-left">
-            <!-- Corrected onclick function names -->
             <button class="btn btn-warning" onclick="showProximosTramitesModal()">
                 <i class="fas fa-calendar-alt"></i> Próximos Trámites
             </button>
@@ -616,7 +646,7 @@
                     <th data-sort="marcaModelo">Marca/Modelo <span class="sort-icon fas fa-sort"></span></th>
                     <th data-sort="placas">Placas <span class="sort-icon fas fa-sort"></span></th>
                     <th data-sort="proximoMantenimiento">Próx. Manto. <span class="sort-icon fas fa-sort"></span></th>
-                    <th>Próx. Verif.</th> <!-- Sorting verification is complex due to calculation. Highlighting implemented. -->
+                    <th>Próx. Verif.</th> <!-- Sorting complicated by status -->
                     <th data-sort="cambioPlacas">Cambio Placas <span class="sort-icon fas fa-sort"></span></th>
                     <th data-sort="vencimientoSeguro">Venc. Seguro <span class="sort-icon fas fa-sort"></span></th>
                     <th data-sort="refrendoAnioPagado">Refrendo <span class="sort-icon fas fa-sort"></span></th>
@@ -664,7 +694,7 @@
                 <input type="text" id="vehicleColor" />
               </div>
               <div class="form-group">
-                <label for="vehiclePlacas">Placas (máx 10):</label> <!-- NO LONGER REQUIRED -->
+                <label for="vehiclePlacas">Placas (máx 10):</label>
                 <input type="text" id="vehiclePlacas" maxlength="10" />
               </div>
               <div class="form-group">
@@ -694,6 +724,12 @@
                 <label for="vehicleVencSeguro">Vencimiento Seguro (Fecha):</label>
                 <input type="date" id="vehicleVencSeguro" />
               </div>
+               <!-- NEW: Last Verification Date (Readonly here, set via table button) -->
+               <div class="form-group">
+                 <label for="vehicleLastVerification">Última Verificación Realizada:</label>
+                 <input type="date" id="vehicleLastVerification" readonly disabled />
+                 <small class="form-text">Se actualiza con el botón <i class="fas fa-check-circle"></i> Marcar Verif.</small>
+               </div>
               <div class="form-group">
                 <label for="vehicleAseguradora">Aseguradora:</label>
                 <input type="text" id="vehicleAseguradora" />
@@ -708,7 +744,7 @@
               </div>
                <div class="form-group">
                 <label for="vehicleObservaciones">Observaciones Generales:</label>
-                <textarea id="vehicleObservaciones" rows="3"></textarea>
+                <textarea id="vehicleObservaciones" rows="2"></textarea> <!-- Reduced rows slightly -->
               </div>
           </div>
         </div>
@@ -799,7 +835,7 @@
                     <input type="text" id="newMaintenanceKm" placeholder="Ej: 152000" required/>
                  </div>
                  <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
-                    <label for="newMaintenanceNextChange">Próximo (Opcional):</label>
+                    <label for="newMaintenanceNextChange">Próximo Manto (Opcional):</label>
                     <input type="date" id="newMaintenanceNextChange" />
                  </div>
                  <div style="margin-bottom: 0;"> <!-- Adjusted alignment -->
@@ -818,7 +854,7 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Kilometraje</th>
-                        <th>Próximo Cambio</th>
+                        <th>Próximo Manto</th>
                         <th>Acción</th>
                     </tr>
                     </thead>
@@ -910,8 +946,6 @@
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('additionalDocsModalOverlay')">Cerrar</button>
-            <!-- Optional: Print list button if needed -->
-            <!-- <button class="btn btn-info" onclick="printAdditionalDocs()"> <i class="fas fa-print"></i> Imprimir Lista </button> -->
         </div>
       </div>
     </div>
@@ -921,7 +955,7 @@
     <div class="modal-overlay" id="tramitesModalOverlay">
       <div class="modal" id="tramitesModal">
         <div class="modal-header">
-            <h2><i class="fas fa-calendar-check"></i> Próximos Trámites (Siguientes 30 días)</h2>
+            <h2><i class="fas fa-calendar-check"></i> Próximos Trámites (Siguientes 60 días)</h2>
             <button class="close-btn" onclick="closeModal('tramitesModalOverlay')" title="Cerrar">&times;</button>
         </div>
         <div class="modal-body">
@@ -1036,9 +1070,10 @@
         <div class="modal-body">
             <p>Selecciona un archivo CSV para agregar vehículos en lote.</p>
             <p>El archivo debe tener las siguientes columnas (en orden):<br>
-               <code>MarcaModelo, Modelo, Año, Color, Placas, NumeroSerie, FechaAdquisicion, Kilometraje, ProximoMantenimiento, CambioPlacas, VencimientoSeguro, Aseguradora, TelefonoSeguro, RefrendoAnioPagado, Observaciones</code>
+               <code>MarcaModelo, Modelo, Año, Color, Placas, NumeroSerie, FechaAdquisicion, Kilometraje, ProximoMantenimiento, CambioPlacas, VencimientoSeguro, Aseguradora, TelefonoSeguro, RefrendoAnioPagado, Observaciones, LastVerificationDate</code>
+               <br><small>(La columna <strong>LastVerificationDate</strong> es opcional, puede dejarse vacía).</small>
             </p>
-            <p><small>La primera fila debe ser el encabezado (será ignorada).</small></p>
+            <p><small>La primera fila debe ser el encabezado (será ignorada). Solo <strong>MarcaModelo</strong> es obligatorio.</small></p>
             <div class="form-group">
                 <label for="importFile">Archivo CSV:</label>
                 <input type="file" id="importFile" accept=".csv" required />
@@ -1077,11 +1112,12 @@
         aseguradora: "AXA",
         telefono: "55-1234-5678",
         refrendoAnioPagado: 2024,
+        lastVerificationDate: null, // NEW FIELD
         fallas: [ { id: 1700000001001, fechaFalla: '2024-05-10', descripcion: 'Ruido extraño al arrancar' } ],
         mantenimientos: [ { id: 1700000002001, fechaManto: '2024-01-15', kilometraje: '145000', proximoCambio: '2024-07-15'} ],
         polizaBase64: "",
         tarjetaCirculacionBase64: "",
-        additionalDocuments: [] // NEW: Array for additional documents
+        additionalDocuments: []
       },
       {
         id: 1700000000002,
@@ -1100,6 +1136,7 @@
         aseguradora: "Qualitas",
         telefono: "55-9876-5432",
         refrendoAnioPagado: 2024,
+        lastVerificationDate: "2024-02-15", // Example: Verified in Feb
         fallas: [],
         mantenimientos: [ { id: 1700000002002, fechaManto: '2024-02-01', kilometraje: '60000', proximoCambio: '2024-08-01'} ],
         polizaBase64: "",
@@ -1125,6 +1162,7 @@
         aseguradora: "GNP",
         telefono: "",
         refrendoAnioPagado: 2024,
+        lastVerificationDate: null, // NEW FIELD
         fallas: [],
         mantenimientos: [],
         polizaBase64: "",
@@ -1158,7 +1196,7 @@
     let statesData = [];
     let peopleLicenses = [];
     const STORAGE_KEYS = {
-        vehicles: "lefiocars_vehicles_v2", // Updated version suffix due to data structure change
+        vehicles: "lefiocars_vehicles_v3", // Incremented version for new fields
         states: "lefiocars_statesData_v1",
         licenses: "lefiocars_peopleLicenses_v1"
     };
@@ -1169,16 +1207,19 @@
         const storedVehicles = localStorage.getItem(STORAGE_KEYS.vehicles);
         if (storedVehicles) {
              vehicles = JSON.parse(storedVehicles);
-             // --- Data Migration Check ---
-             // Check if the first vehicle has the new 'additionalDocuments' field. If not, add it.
-             if (vehicles.length > 0 && vehicles[0].additionalDocuments === undefined) {
-                 console.log("Migrating old vehicle data: Adding 'additionalDocuments' array.");
+             // --- Data Migration Check (Add lastVerificationDate if missing) ---
+             if (vehicles.length > 0 && vehicles[0].lastVerificationDate === undefined) {
+                 console.log("Migrating old vehicle data: Adding 'lastVerificationDate' field.");
                  vehicles.forEach(v => {
+                     if (v.lastVerificationDate === undefined) {
+                         v.lastVerificationDate = null; // Initialize as null
+                     }
+                     // Also ensure additionalDocuments exists from previous migration
                      if (v.additionalDocuments === undefined) {
                          v.additionalDocuments = [];
                      }
                  });
-                 showToast("Estructura de datos actualizada para documentos adicionales.", "info");
+                 showToast("Estructura de datos actualizada para verificación.", "info");
                  // Re-save immediately after migration
                  localStorage.setItem(STORAGE_KEYS.vehicles, JSON.stringify(vehicles));
              }
@@ -1270,17 +1311,25 @@
         }, duration); // Use provided duration
     }
 
-    // Date comparison helper (Increased default check window)
+    // Date comparison helper
     function isWithinDays(dateString, days = 60) { // Check 60 days ahead by default
       if (!dateString) return { isNear: false, daysDiff: Infinity, status: 'nodate' };
       try {
-        const targetDate = new Date(dateString + 'T00:00:00');
+        // Try parsing with and without time to handle potential variations
+        let targetDate = new Date(dateString + 'T00:00:00'); // Assume date only if no time
+        if (isNaN(targetDate.getTime())) {
+            targetDate = new Date(dateString); // Try parsing as is
+        }
+
         if (isNaN(targetDate.getTime())) {
              console.warn("Invalid date string:", dateString);
              return { isNear: false, daysDiff: Infinity, status: 'invalid' };
         }
+        targetDate.setHours(0, 0, 0, 0); // Normalize target date
+
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0); // Normalize today
+
         const diffTime = targetDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -1300,11 +1349,11 @@
 
     // Verification Calendar Logic
     const verificationCalendar = [
-        { terminaciones: [5, 6], periodo1: "Ene-Feb", periodo2: "Jul-Ago", month1: 1, month2: 7 },
-        { terminaciones: [7, 8], periodo1: "Feb-Mar", periodo2: "Ago-Sep", month1: 2, month2: 8 },
-        { terminaciones: [3, 4], periodo1: "Mar-Abr", periodo2: "Sep-Oct", month1: 3, month2: 9 },
-        { terminaciones: [1, 2], periodo1: "Abr-May", periodo2: "Oct-Nov", month1: 4, month2: 10 },
-        { terminaciones: [9, 0], periodo1: "May-Jun", periodo2: "Nov-Dic", month1: 5, month2: 11 }
+        { terminaciones: [5, 6], periodo1: "Ene-Feb", periodo2: "Jul-Ago", month1Start: 0, month1End: 1, month2Start: 6, month2End: 7 }, // Months are 0-indexed
+        { terminaciones: [7, 8], periodo1: "Feb-Mar", periodo2: "Ago-Sep", month1Start: 1, month1End: 2, month2Start: 7, month2End: 8 },
+        { terminaciones: [3, 4], periodo1: "Mar-Abr", periodo2: "Sep-Oct", month1Start: 2, month1End: 3, month2Start: 8, month2End: 9 },
+        { terminaciones: [1, 2], periodo1: "Abr-May", periodo2: "Oct-Nov", month1Start: 3, month1End: 4, month2Start: 9, month2End: 10 },
+        { terminaciones: [9, 0], periodo1: "May-Jun", periodo2: "Nov-Dic", month1Start: 4, month1End: 5, month2Start: 10, month2End: 11 }
     ];
 
     function getLastNumericDigit(placa) {
@@ -1313,53 +1362,74 @@
       return match ? parseInt(match[0], 10) : null;
     }
 
-    function getNextVerificationInfo(placas) {
+    // --- MODIFIED: getNextVerificationInfo ---
+    function getNextVerificationInfo(placas, lastVerificationDateStr) {
       const lastDigit = getLastNumericDigit(placas);
       // Return 'N/A' status if no plates or no last digit
       if (lastDigit === null || placas === null || placas === "") {
-          return { text: "N/A", status: 'nodate', daysDiff: Infinity, isNear: false };
+          return { text: "N/A", status: 'nodate', daysDiff: Infinity, isNear: false, periodText: null, periodYear: null };
       }
 
       const calendarEntry = verificationCalendar.find(item => item.terminaciones.includes(lastDigit));
-      if (!calendarEntry) return { text: "Dígito Inválido", status: 'invalid', daysDiff: Infinity, isNear: false };
+      if (!calendarEntry) return { text: "Dígito Inválido", status: 'invalid', daysDiff: Infinity, isNear: false, periodText: null, periodYear: null };
 
       const today = new Date();
       const currentYear = today.getFullYear();
       today.setHours(0, 0, 0, 0); // Normalize today
 
-      let targetEndDate;
-      let periodText;
-      let nextVerifYear;
+      let currentPeriodStartDate, currentPeriodEndDate, currentPeriodText, currentPeriodYear;
 
-      const endPeriod1Date = new Date(currentYear, calendarEntry.month1 + 1, 0); // Last day of end month
-      const endPeriod2Date = new Date(currentYear, calendarEntry.month2 + 1, 0); // Last day of end month
+      // Determine which period applies NOW
+      const period1EndDate = new Date(currentYear, calendarEntry.month1End + 1, 0); // Last day of end month
+      const period2EndDate = new Date(currentYear, calendarEntry.month2End + 1, 0); // Last day of end month
+      period1EndDate.setHours(23, 59, 59, 999); // Ensure comparison includes the whole day
+      period2EndDate.setHours(23, 59, 59, 999); // Ensure comparison includes the whole day
 
-      if (today <= endPeriod1Date) {
-          targetEndDate = endPeriod1Date;
-          periodText = calendarEntry.periodo1;
-          nextVerifYear = currentYear;
-      } else if (today <= endPeriod2Date) {
-          targetEndDate = endPeriod2Date;
-          periodText = calendarEntry.periodo2;
-          nextVerifYear = currentYear;
+      if (today <= period1EndDate) {
+          currentPeriodStartDate = new Date(currentYear, calendarEntry.month1Start, 1);
+          currentPeriodEndDate = period1EndDate;
+          currentPeriodText = calendarEntry.periodo1;
+          currentPeriodYear = currentYear;
+      } else if (today <= period2EndDate) {
+          currentPeriodStartDate = new Date(currentYear, calendarEntry.month2Start, 1);
+          currentPeriodEndDate = period2EndDate;
+          currentPeriodText = calendarEntry.periodo2;
+          currentPeriodYear = currentYear;
       } else {
-           // Next is the first period of next year
-           targetEndDate = new Date(currentYear + 1, calendarEntry.month1 + 1, 0);
-           periodText = calendarEntry.periodo1;
-           nextVerifYear = currentYear + 1;
+           // Next period is the first one of next year
+           currentPeriodStartDate = new Date(currentYear + 1, calendarEntry.month1Start, 1);
+           currentPeriodEndDate = new Date(currentYear + 1, calendarEntry.month1End + 1, 0);
+           currentPeriodEndDate.setHours(23, 59, 59, 999);
+           currentPeriodText = calendarEntry.periodo1;
+           currentPeriodYear = currentYear + 1;
+      }
+      currentPeriodStartDate.setHours(0, 0, 0, 0);
+
+      // --- Check if already verified for this period ---
+      if (lastVerificationDateStr) {
+          try {
+            let lastVerificationDate = new Date(lastVerificationDateStr + 'T00:00:00');
+            if (isNaN(lastVerificationDate.getTime())) lastVerificationDate = new Date(lastVerificationDateStr); // Try parsing as is
+            lastVerificationDate.setHours(0,0,0,0);
+
+            if (!isNaN(lastVerificationDate.getTime()) && lastVerificationDate >= currentPeriodStartDate && lastVerificationDate <= currentPeriodEndDate) {
+                  return { text: `Verificado ${currentPeriodText} ${currentPeriodYear} (el ${lastVerificationDateStr})`, status: 'completed', daysDiff: null, isNear: false, periodText: currentPeriodText, periodYear: currentPeriodYear };
+            }
+          } catch(e){ console.error("Error parsing lastVerificationDate:", lastVerificationDateStr, e);}
       }
 
-      if (isNaN(targetEndDate.getTime())) {
-          console.error("Failed to create verification target end date:", nextVerifYear, periodText);
-          return { text: "Error Fecha", status: 'error', daysDiff: Infinity, isNear: false };
+      // --- If not completed, calculate urgency based on current period END date ---
+      if (isNaN(currentPeriodEndDate.getTime())) {
+          console.error("Failed to create verification target end date:", currentPeriodYear, currentPeriodText);
+          return { text: "Error Fecha", status: 'error', daysDiff: Infinity, isNear: false, periodText: currentPeriodText, periodYear: currentPeriodYear };
       }
 
       // Check if the calculated END date is within 30 days or overdue (using 30 for visual urgency)
-      const { isNear, daysDiff, status } = isWithinDays(targetEndDate.toISOString().split('T')[0], 30);
+      const { isNear, daysDiff, status } = isWithinDays(currentPeriodEndDate.toISOString().split('T')[0], 30);
 
-      let text = `${periodText} ${nextVerifYear}`;
+      let text = `${currentPeriodText} ${currentPeriodYear}`;
       // Return info based on END date proximity
-      return { text: text, status: status, daysDiff: daysDiff, isNear: isNear };
+      return { text: text, status: status, daysDiff: daysDiff, isNear: isNear, periodText: currentPeriodText, periodYear: currentPeriodYear };
     }
 
     // Debounce function
@@ -1395,6 +1465,15 @@
     }
     function sanitizeFilename(name) {
          return (name || "archivo").replace(/[\/\\?%*:|"<>]/g, '_');
+    }
+
+    // Date validation helper
+    function isValidDateString(dateString) {
+        if (!dateString) return false;
+        // Basic check for YYYY-MM-DD format
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return false;
+        const date = new Date(dateString + 'T00:00:00'); // Use specific time to avoid timezone issues
+        return !isNaN(date.getTime());
     }
 
     /* ========================================================================== */
@@ -1478,12 +1557,13 @@
 
             // --- Deadline Checks ---
             const mantInfo = isWithinDays(veh.proximoMantenimiento);
-            const placasChangeInfo = isWithinDays(veh.cambioPlacas); // Renamed from placasInfo to avoid conflict
+            const placasChangeInfo = isWithinDays(veh.cambioPlacas);
             const seguroInfo = isWithinDays(veh.vencimientoSeguro);
-            const verifInfo = getNextVerificationInfo(veh.placas);
+            // --- MODIFIED: Pass lastVerificationDate to check ---
+            const verifInfo = getNextVerificationInfo(veh.placas, veh.lastVerificationDate);
 
             // --- Create Badges (Only for specific columns now) ---
-            const createBadge = (info, baseText) => {
+            const createBadge = (info, baseText, itemType = '') => {
                 const dateStr = baseText || 'N/A';
                 if (!info || info.status === 'nodate' || info.status === 'invalid' || info.status === 'error') return dateStr;
 
@@ -1492,30 +1572,47 @@
                  if(info.daysDiff !== Infinity && info.daysDiff !== null) {
                     if (info.daysDiff > 0) text += ` (en ${info.daysDiff} día${info.daysDiff !== 1 ? 's' : ''})`;
                     else if (info.daysDiff === 0) text += ' (Hoy)';
-                    else text += ` (${Math.abs(info.daysDiff)} día${Math.abs(info.daysDiff) !== 1 ? 's' : ''} atrasado)`;
+                    else text += ` (${Math.abs(info.daysDiff)} día${Math.abs(info.daysDiff) !== 1 ? 's' : ''} atr.)`;
                  }
                  if (info.status === 'overdue') { badgeClass = 'badge-danger'; icon = '<i class="fas fa-exclamation-circle"></i> '; }
                  else if (info.status === 'due') { badgeClass = 'badge-warning'; icon = '<i class="fas fa-clock"></i> '; }
                  else return text; // Only badge if near or overdue
 
-                 return `<span class="badge ${badgeClass}">${icon}${text}</span>`;
+                 let badgeHTML = `<span class="badge ${badgeClass}">${icon}${text}</span>`;
+
+                 // Add "Mark Renewed" button for insurance specifically if due/overdue
+                 if (itemType === 'insurance' && (info.status === 'due' || info.status === 'overdue')) {
+                     badgeHTML += `<button class="btn btn-success btn-sm" onclick="markInsuranceRenewed(${originalIndex})" title="Marcar Seguro como Renovado"> <i class="fas fa-check"></i> Renovar </button>`;
+                 }
+                 return badgeHTML;
             };
 
             const mantBadge = createBadge(mantInfo, veh.proximoMantenimiento);
-            const placasChangeBadge = createBadge(placasChangeInfo, veh.cambioPlacas); // Use renamed var
-            const seguroBadge = createBadge(seguroInfo, veh.vencimientoSeguro);
+            const placasChangeBadge = createBadge(placasChangeInfo, veh.cambioPlacas);
+            const seguroBadge = createBadge(seguroInfo, veh.vencimientoSeguro, 'insurance'); // Pass type
 
-            // --- Verification Cell Class ---
-            let verifCellClass = 'verif-ok'; // Default or future
-            if (verifInfo.status === 'overdue') { verifCellClass = 'verif-overdue'; }
-            else if (verifInfo.status === 'due') { verifCellClass = 'verif-due'; }
+            // --- Verification Cell Class and Content ---
+            let verifCellClass = 'verif-future'; // Default
             let verifCellText = verifInfo.text || 'N/A';
-            // Add days info to text if relevant for display
-             if (verifInfo.daysDiff !== Infinity && verifInfo.daysDiff !== null) {
-                if (verifInfo.daysDiff < 0) verifCellText += ` (${Math.abs(verifInfo.daysDiff)} día${Math.abs(verifInfo.daysDiff) !== 1 ? 's' : ''} atr.)`;
-                else if (verifInfo.daysDiff === 0) verifCellText += ' (Hoy)';
-                else if (verifInfo.isNear && verifInfo.status === 'due') verifCellText += ` (en ${verifInfo.daysDiff} día${verifInfo.daysDiff !== 1 ? 's' : ''})`;
-             }
+            let verifButtonHTML = '';
+
+            if (verifInfo.status === 'completed') {
+                verifCellClass = 'verif-ok';
+                verifCellText = `<i class="fas fa-check-circle"></i> ${verifInfo.text}`;
+            } else if (verifInfo.status === 'overdue') {
+                verifCellClass = 'verif-overdue';
+                verifCellText += ` (${Math.abs(verifInfo.daysDiff)} día${Math.abs(verifInfo.daysDiff) !== 1 ? 's' : ''} atr.)`;
+                verifButtonHTML = `<button class="btn btn-success btn-sm" onclick="markVerificationDone(${originalIndex})" title="Marcar Verificación como Realizada"><i class="fas fa-check-circle"></i> Marcar Verif.</button>`;
+            } else if (verifInfo.status === 'due') {
+                verifCellClass = 'verif-due';
+                if (verifInfo.daysDiff === 0) verifCellText += ' (Hoy)';
+                else if (verifInfo.daysDiff > 0) verifCellText += ` (en ${verifInfo.daysDiff} día${verifInfo.daysDiff !== 1 ? 's' : ''})`;
+                verifButtonHTML = `<button class="btn btn-success btn-sm" onclick="markVerificationDone(${originalIndex})" title="Marcar Verificación como Realizada"><i class="fas fa-check-circle"></i> Marcar Verif.</button>`;
+            } else if (verifInfo.status === 'future') {
+                 verifCellClass = 'verif-future'; // No special style needed
+            } else { // nodate, invalid, error
+                 verifCellClass = `verif-${verifInfo.status}`; // e.g., verif-nodate
+            }
 
             // --- Document Status ---
             const polizaIcon = veh.polizaBase64 ? '<i class="fas fa-file-pdf text-success" title="Póliza cargada"></i>' : '<i class="fas fa-file-alt text-muted" title="Sin Póliza"></i>';
@@ -1531,14 +1628,19 @@
                 </td>
                 <td>${veh.placas || '<span class="text-muted">N/A</span>'}</td>
                 <td>${mantBadge}</td>
-                <td class="${verifCellClass}">${verifCellText}</td> <!-- Verification cell with class -->
+                <td class="${verifCellClass}">
+                    <div class="verification-cell">
+                        <span>${verifCellText}</span>
+                        ${verifButtonHTML}
+                    </div>
+                </td>
                 <td>${placasChangeBadge}</td>
                 <td>${seguroBadge}</td>
                 <td class="text-center">${veh.refrendoAnioPagado ? `<span class="badge badge-success">${veh.refrendoAnioPagado}</span>` : '<span class="badge badge-secondary">N/P</span>'}</td>
                 <td class="text-center">
                     <button class="btn btn-light btn-sm btn-icon" onclick="openVehicleDocModal(${originalIndex}, 'polizaBase64', 'Póliza de Seguro')" title="Póliza">${polizaIcon}</button>
                     <button class="btn btn-light btn-sm btn-icon" onclick="openVehicleDocModal(${originalIndex}, 'tarjetaCirculacionBase64', 'Tarjeta de Circulación')" title="Tarjeta Circ.">${tarjetaIcon}</button>
-                    <button class="btn btn-light btn-sm btn-icon" onclick="openAdditionalDocsModal(${originalIndex})" title="${additionalDocsCount} Documentos Adicionales">${additionalDocsIcon} (${additionalDocsCount})</button> <!-- New Button -->
+                    <button class="btn btn-light btn-sm btn-icon" onclick="openAdditionalDocsModal(${originalIndex})" title="${additionalDocsCount} Documentos Adicionales">${additionalDocsIcon} (${additionalDocsCount})</button>
                 </td>
                 <td class="text-center">
                     <button class="btn btn-secondary btn-sm" onclick="openFaultsModal(${originalIndex})" title="Historial de Fallas (${veh.fallas?.length || 0})">
@@ -1696,7 +1798,7 @@
 
 
     /* ========================================================================== */
-    /*  5. VEHICLE MANAGEMENT (CRUD)                                              */
+    /*  5. VEHICLE MANAGEMENT (CRUD & Status Updates)                           */
     /* ========================================================================== */
 
     function clearVehicleForm() {
@@ -1704,8 +1806,10 @@
         if(indexInput) indexInput.value = "";
         const modal = document.getElementById('vehicleModal');
         if (!modal) return;
-        modal.querySelectorAll('.modal-body input[type="text"], .modal-body input[type="number"], .modal-body input[type="date"], .modal-body textarea, .modal-body select')
+        modal.querySelectorAll('.modal-body input[type="text"], .modal-body input[type="number"], .modal-body input[type="date"]:not([readonly]), .modal-body textarea, .modal-body select')
              .forEach(el => el.value = '');
+        // Clear readonly fields too
+        const lastVerifInput = document.getElementById('vehicleLastVerification'); if (lastVerifInput) lastVerifInput.value = '';
         const yearInput = document.getElementById('vehicleAnio'); if (yearInput) yearInput.value = '';
         const refrendoInput = document.getElementById('vehicleRefrendoAnio'); if (refrendoInput) refrendoInput.value = '';
     }
@@ -1737,7 +1841,8 @@
             'vehicleMantenimiento': veh.proximoMantenimiento, 'vehicleCambioPlacas': veh.cambioPlacas,
             'vehicleVencSeguro': veh.vencimientoSeguro, 'vehicleAseguradora': veh.aseguradora,
             'vehicleTelefono': veh.telefono, 'vehicleRefrendoAnio': veh.refrendoAnioPagado,
-            'vehicleObservaciones': veh.observaciones
+            'vehicleObservaciones': veh.observaciones,
+            'vehicleLastVerification': veh.lastVerificationDate // Populate readonly field
         };
         for (const id in fields) {
             const element = document.getElementById(id);
@@ -1752,25 +1857,17 @@
 
     function saveVehicle() {
         const marcaModeloInput = document.getElementById('vehicleMarcaModelo');
-        // const placasInput = document.getElementById('vehiclePlacas'); // Placas no longer mandatory for validation
         const marcaModelo = marcaModeloInput ? marcaModeloInput.value.trim() : '';
-        // const placas = placasInput ? placasInput.value.trim() : ''; // Get value but don't validate presence
         const editIndexStr = document.getElementById('editVehicleIndex')?.value;
         const isEditing = editIndexStr !== undefined && editIndexStr !== "";
         const editIndex = isEditing ? parseInt(editIndexStr) : null;
 
-        // Validation (Only Marca/Modelo is now mandatory)
+        // Validation (Only Marca/Modelo is mandatory)
         if (!marcaModelo) {
             showToast("El campo Marca/Modelo es obligatorio.", "warning");
             if (marcaModeloInput) marcaModeloInput.focus();
             return;
         }
-        // REMOVED: Placas validation
-        // if (!placas) {
-        //     showToast("El campo Placas es obligatorio.", "warning");
-        //     if (placasInput) placasInput.focus();
-        //     return;
-        // }
 
          if (isEditing && (editIndex === null || isNaN(editIndex) || editIndex < 0 || editIndex >= vehicles.length || !vehicles[editIndex])) {
             showToast("Error al identificar el vehículo para editar.", "error");
@@ -1787,7 +1884,7 @@
             modelo: getTrimmedValue('vehicleModelo'),
             año: getIntValueOrNull('vehicleAnio'),
             color: getTrimmedValue('vehicleColor'),
-            placas: getTrimmedValue('vehiclePlacas'), // Save trimmed value or empty string
+            placas: getTrimmedValue('vehiclePlacas'),
             numeroSerie: getTrimmedValue('vehicleNumSerie'),
             fechaAdquisicion: getValueOrNull('vehicleFechaAdq'),
             kilometraje: getTrimmedValue('vehicleKilometraje'),
@@ -1798,12 +1895,13 @@
             telefono: getTrimmedValue('vehicleTelefono'),
             refrendoAnioPagado: getIntValueOrNull('vehicleRefrendoAnio'),
             observaciones: getTrimmedValue('vehicleObservaciones'),
-            // Preserve existing arrays/docs if editing, initialize if adding
+            // Preserve existing arrays/docs/verification date if editing, initialize if adding
+            lastVerificationDate: isEditing ? vehicles[editIndex].lastVerificationDate || null : null, // Preserve
             fallas: isEditing && Array.isArray(vehicles[editIndex].fallas) ? vehicles[editIndex].fallas : [],
             mantenimientos: isEditing && Array.isArray(vehicles[editIndex].mantenimientos) ? vehicles[editIndex].mantenimientos : [],
             polizaBase64: isEditing ? vehicles[editIndex].polizaBase64 || "" : "",
             tarjetaCirculacionBase64: isEditing ? vehicles[editIndex].tarjetaCirculacionBase64 || "" : "",
-            additionalDocuments: isEditing && Array.isArray(vehicles[editIndex].additionalDocuments) ? vehicles[editIndex].additionalDocuments : [], // Preserve or init new array
+            additionalDocuments: isEditing && Array.isArray(vehicles[editIndex].additionalDocuments) ? vehicles[editIndex].additionalDocuments : [],
         };
 
         if (isEditing) {
@@ -1832,6 +1930,49 @@
         showToast(`Vehículo "${deletedName}" eliminado.`, "info");
         renderTable();
       }
+    }
+
+    // --- NEW: Mark Insurance Renewed ---
+    function markInsuranceRenewed(index) {
+        if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+            showToast("Error: Vehículo no encontrado.", "error"); return;
+        }
+        const veh = vehicles[index];
+        const newExpiryDate = prompt(`Seguro para ${veh.marcaModelo} (${veh.placas || 'N/A'}).\nIngrese la NUEVA fecha de vencimiento (YYYY-MM-DD):`, veh.vencimientoSeguro || '');
+
+        if (newExpiryDate === null) return; // User cancelled
+
+        if (!isValidDateString(newExpiryDate)) {
+             showToast("Fecha inválida. Formato debe ser YYYY-MM-DD.", "error");
+             return;
+        }
+
+        veh.vencimientoSeguro = newExpiryDate;
+        saveToLocalStorage();
+        renderTable();
+        showToast("Fecha de vencimiento de seguro actualizada.", "success");
+    }
+
+    // --- NEW: Mark Verification Done ---
+    function markVerificationDone(index) {
+        if (index === null || index === undefined || index < 0 || index >= vehicles.length || !vehicles[index]) {
+             showToast("Error: Vehículo no encontrado.", "error"); return;
+        }
+        const veh = vehicles[index];
+        const todayStr = new Date().toISOString().split('T')[0];
+        const verificationDate = prompt(`Verificación para ${veh.marcaModelo} (${veh.placas || 'N/A'}).\nIngrese la FECHA en que se realizó (YYYY-MM-DD):`, veh.lastVerificationDate || todayStr);
+
+        if (verificationDate === null) return; // User cancelled
+
+        if (!isValidDateString(verificationDate)) {
+            showToast("Fecha inválida. Formato debe ser YYYY-MM-DD.", "error");
+            return;
+        }
+
+        veh.lastVerificationDate = verificationDate;
+        saveToLocalStorage();
+        renderTable();
+        showToast("Fecha de última verificación actualizada.", "success");
     }
 
     /* ========================================================================== */
@@ -1899,6 +2040,8 @@
       const desc = descInput ? descInput.value.trim() : "";
 
       if (!desc) { showToast("La descripción es obligatoria.", "warning"); if (descInput) descInput.focus(); return; }
+      if (fecha && !isValidDateString(fecha)) { showToast("Fecha inválida. Formato debe ser YYYY-MM-DD.", "error"); return; }
+
 
       if (!Array.isArray(vehicles[currentVehicleIndex].fallas)) vehicles[currentVehicleIndex].fallas = [];
       vehicles[currentVehicleIndex].fallas.push({ id: Date.now(), fechaFalla: fecha || null, descripcion: desc });
@@ -2014,6 +2157,7 @@
       if (currentVehicleIndex === null || currentVehicleIndex < 0 || currentVehicleIndex >= vehicles.length || !vehicles[currentVehicleIndex]) {
           showToast("Error: Vehículo no seleccionado.", "error"); return;
       }
+      const veh = vehicles[currentVehicleIndex];
       const dateInput = document.getElementById("newMaintenanceDate");
       const kmInput = document.getElementById("newMaintenanceKm");
       const nextChangeInput = document.getElementById("newMaintenanceNextChange");
@@ -2023,12 +2167,26 @@
 
       if (!fecha) { showToast("La fecha es obligatoria.", "warning"); if (dateInput) dateInput.focus(); return; }
       if (!km) { showToast("El kilometraje es obligatorio.", "warning"); if (kmInput) kmInput.focus(); return; }
+      if (!isValidDateString(fecha)) { showToast("Fecha inválida. Formato debe ser YYYY-MM-DD.", "error"); return; }
+      if (nextChange && !isValidDateString(nextChange)) { showToast("Fecha Próximo Manto inválida. Formato YYYY-MM-DD.", "error"); return; }
 
-      if (!Array.isArray(vehicles[currentVehicleIndex].mantenimientos)) vehicles[currentVehicleIndex].mantenimientos = [];
-      vehicles[currentVehicleIndex].mantenimientos.push({ id: Date.now(), fechaManto: fecha, kilometraje: km, proximoCambio: nextChange || null });
+
+      if (!Array.isArray(veh.mantenimientos)) veh.mantenimientos = [];
+      veh.mantenimientos.push({ id: Date.now(), fechaManto: fecha, kilometraje: km, proximoCambio: nextChange || null });
+
+      // Optionally update the main vehicle's next maintenance date
+      if (nextChange) {
+           // Update only if the new 'nextChange' is later than the current 'proximoMantenimiento'
+           // or if 'proximoMantenimiento' is not set.
+           if (!veh.proximoMantenimiento || new Date(nextChange + 'T00:00:00') > new Date(veh.proximoMantenimiento + 'T00:00:00')) {
+               veh.proximoMantenimiento = nextChange;
+                showToast("Próximo mantenimiento del vehículo actualizado.", "info");
+           }
+      }
+
       saveToLocalStorage();
-      renderMaintenanceTable(vehicles[currentVehicleIndex]);
-      renderTable();
+      renderMaintenanceTable(veh);
+      renderTable(); // Update main table
       if (dateInput) dateInput.value = "";
       if (kmInput) kmInput.value = "";
       if (nextChangeInput) nextChangeInput.value = "";
@@ -2369,8 +2527,9 @@
     function showProximosTramitesModal() {
       let htmlContent = "";
       let found = false;
-       const itemsList = []; // Collect items for the next 30 days
-       const checkDays = 30; // Specific window for this modal
+       const itemsList = []; // Collect items for the next checkDays
+       const checkDays = 60; // Use the default check window from isWithinDays
+       const checkDaysVerif = 30; // Verification uses a 30-day window for 'due' status
 
        vehicles.forEach((veh) => {
             if (!veh || typeof veh !== 'object') return;
@@ -2378,19 +2537,33 @@
             const placas = veh.placas || 'N/A';
             const vehicleIdentifier = `${marcaModelo} (${placas})`;
 
-            // Get status info within the specific window (30 days)
-            const mantInfo = { ...isWithinDays(veh.proximoMantenimiento, checkDays), type: 'Mantenimiento', date: veh.proximoMantenimiento, vehicle: vehicleIdentifier };
-            const placasChangeInfo = { ...isWithinDays(veh.cambioPlacas, checkDays), type: 'Cambio Placas', date: veh.cambioPlacas, vehicle: vehicleIdentifier };
-            const seguroInfo = { ...isWithinDays(veh.vencimientoSeguro, checkDays), type: 'Vence Seguro', date: veh.vencimientoSeguro, vehicle: vehicleIdentifier };
-            const verifInfoRaw = getNextVerificationInfo(veh.placas); // Uses its own 30-day check internally
-            const verifInfo = { ...verifInfoRaw, type: `Verificación ${verifInfoRaw.text || ''}`, date: null, isNear: verifInfoRaw.isNear, status: verifInfoRaw.status, daysDiff: verifInfoRaw.daysDiff, vehicle: vehicleIdentifier };
-
-            [mantInfo, placasChangeInfo, seguroInfo, verifInfo].forEach(info => {
-                if (info.isNear && info.status !== 'future' && info.status !== 'nodate' && info.status !== 'invalid' && info.status !== 'error') {
-                    itemsList.push(info);
-                    found = true;
-                }
-            });
+            // Check Mantenimiento
+            const mantInfo = isWithinDays(veh.proximoMantenimiento, checkDays);
+             if (mantInfo.isNear && mantInfo.status !== 'future') {
+                 itemsList.push({ ...mantInfo, type: 'Mantenimiento', date: veh.proximoMantenimiento, vehicle: vehicleIdentifier });
+                 found = true;
+            }
+            // Check Cambio Placas
+             const placasChangeInfo = isWithinDays(veh.cambioPlacas, checkDays);
+             if (placasChangeInfo.isNear && placasChangeInfo.status !== 'future') {
+                 itemsList.push({ ...placasChangeInfo, type: 'Cambio Placas', date: veh.cambioPlacas, vehicle: vehicleIdentifier });
+                 found = true;
+             }
+            // Check Vencimiento Seguro
+             const seguroInfo = isWithinDays(veh.vencimientoSeguro, checkDays);
+             if (seguroInfo.isNear && seguroInfo.status !== 'future') {
+                 itemsList.push({ ...seguroInfo, type: 'Vence Seguro', date: veh.vencimientoSeguro, vehicle: vehicleIdentifier });
+                 found = true;
+             }
+            // Check Verificacion (Important: uses internal check + lastVerificationDate)
+             const verifInfoRaw = getNextVerificationInfo(veh.placas, veh.lastVerificationDate);
+             // Only show if status is 'due' or 'overdue' (not 'completed' or 'future')
+             if (verifInfoRaw.status === 'due' || verifInfoRaw.status === 'overdue') {
+                // Use the tighter 30-day check for display urgency if status is 'due'
+                const displayDaysDiff = verifInfoRaw.status === 'due' ? isWithinDays(verifInfoRaw.periodEndDate?.toISOString().split('T')[0], checkDaysVerif).daysDiff : verifInfoRaw.daysDiff;
+                itemsList.push({ ...verifInfoRaw, type: `Verificación ${verifInfoRaw.text || ''}`, date: null, daysDiff: displayDaysDiff, vehicle: vehicleIdentifier });
+                found = true;
+             }
         });
 
         itemsList.sort((a, b) => (a.daysDiff === null || a.daysDiff === Infinity ? 9999 : a.daysDiff) - (b.daysDiff === null || b.daysDiff === Infinity ? 9999 : b.daysDiff));
@@ -2398,7 +2571,7 @@
         if (!found) {
             htmlContent = `<p class='text-muted text-center'>No hay trámites próximos o vencidos en los siguientes ${checkDays} días.</p>`;
         } else {
-             htmlContent += '<ul style="list-style: none; padding-left: 0;">';
+             htmlContent += `<ul style="list-style: none; padding-left: 0;">`;
              itemsList.forEach(info => {
                   let badgeClass = (info.status === 'overdue') ? 'badge-danger' : 'badge-warning';
                   let icon = (info.status === 'overdue') ? '<i class="fas fa-exclamation-circle"></i> ' : '<i class="fas fa-clock"></i> ';
@@ -2409,7 +2582,9 @@
                        else if (info.daysDiff === 0) statusText = ' (Hoy)';
                        else statusText = ` (en ${info.daysDiff} día${info.daysDiff!==1 ? 's':''})`;
                   }
-                 htmlContent += `<li style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;"><strong>${info.vehicle}:</strong><br><span class="badge ${badgeClass}" style="margin-top: 5px;">${icon}${info.type}${dateText}${statusText}</span></li>`;
+                  // For verification, use the specific text generated
+                  const itemTypeText = info.type.startsWith('Verif') ? info.type : `${info.type}${dateText}`;
+                 htmlContent += `<li style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;"><strong>${info.vehicle}:</strong><br><span class="badge ${badgeClass}" style="margin-top: 5px;">${icon}${itemTypeText}${statusText}</span></li>`;
              });
              htmlContent = htmlContent.replace(/border-bottom: 1px solid #eee;(?=<\/li>\s*<\/ul>)/, ''); // Remove last border
              htmlContent += '</ul>';
@@ -2417,19 +2592,23 @@
 
       const tramitesContentDiv = document.getElementById("tramitesContent");
       if (tramitesContentDiv) tramitesContentDiv.innerHTML = htmlContent;
+      // Update modal title to reflect the checkDays
+      const tramitesModalTitle = document.querySelector("#tramitesModal .modal-header h2");
+      if(tramitesModalTitle) tramitesModalTitle.innerHTML = `<i class="fas fa-calendar-check"></i> Próximos Trámites (Siguientes ${checkDays} días)`;
       openModal('tramitesModalOverlay');
     }
 
     function printTramites() {
       const tramitesDiv = document.getElementById("tramitesContent");
+      const checkDays = 60; // Match the modal window
       if (!tramitesDiv) { showToast("Error al encontrar contenido.", "error"); return; }
       const contentToPrint = tramitesDiv.innerHTML;
       const printStyles = `<style> body { font-family: Arial, sans-serif; margin: 20px; font-size: 10pt; } h2 { text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; font-size: 14pt;} ul { list-style: none; padding-left: 0; } li { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; page-break-inside: avoid; } li:last-child { border-bottom: none; } strong { font-weight: bold; display: block; margin-bottom: 3px;} .badge { border: 1px solid #ccc; padding: 3px 6px; border-radius: 4px; display: inline-block; font-size: 9pt; white-space: nowrap; color: black; background-color: #eee;} .badge-danger { background-color: #dc3545 !important; color: white !important; border-color: #dc3545 !important;} .badge-warning { background-color: #ffc107 !important; color: black !important; border-color: #ffc107 !important;} @media print { body { margin: 15mm; } .badge-danger, .badge-warning { -webkit-print-color-adjust: exact; print-color-adjust: exact; } li { border-color: #ddd; } } i { margin-right: 5px; } p.text-muted { text-align: center; color: #6c757d; font-style: italic; } </style>`;
-      const fullHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Próximos Trámites - LEFIOS CARS</title>${printStyles}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><h2><i class="fas fa-calendar-check"></i> Próximos Trámites (30 días)</h2>${contentToPrint}</body></html>`;
+      const fullHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Próximos Trámites - LEFIOS CARS</title>${printStyles}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></head><body><h2><i class="fas fa-calendar-check"></i> Próximos Trámites (${checkDays} días)</h2>${contentToPrint}</body></html>`;
       openPrintWindow(fullHtml, "Próximos Trámites");
     }
 
-    // NEW: Print Consolidated Deadline Report
+    // Print Consolidated Deadline Report
     function printConsolidatedReport() {
         let htmlContent = "<h2><i class='fas fa-exclamation-triangle'></i> Reporte General de Vencimientos</h2>";
         const itemsByVehicle = {}; // Group items by vehicle ID
@@ -2463,18 +2642,20 @@
                  itemsByVehicle[vehicleId].items.push({ ...seguroInfo, type: 'Vence Seguro', date: veh.vencimientoSeguro });
                  foundItems = true;
              }
-             // Check Verificacion (uses internal 30-day check for urgency status)
-             const verifInfoRaw = getNextVerificationInfo(veh.placas);
-             if (verifInfoRaw.isNear && verifInfoRaw.status !== 'future' && verifInfoRaw.status !== 'nodate' && verifInfoRaw.status !== 'invalid' && verifInfoRaw.status !== 'error') {
-                 itemsByVehicle[vehicleId].items.push({ ...verifInfoRaw, type: `Verificación ${verifInfoRaw.text || ''}`, date: null });
+             // Check Verificacion (Show only if not completed for the period and is due/overdue)
+             const verifInfoRaw = getNextVerificationInfo(veh.placas, veh.lastVerificationDate);
+             if (verifInfoRaw.status === 'due' || verifInfoRaw.status === 'overdue') {
+                 // Use the specific text from verifInfoRaw
+                 itemsByVehicle[vehicleId].items.push({ ...verifInfoRaw, type: `Verificación`, date: null });
                  foundItems = true;
              }
-             // Check Refrendo (Simple check if paid year is less than current year)
+             // Check Refrendo
              if (veh.refrendoAnioPagado && veh.refrendoAnioPagado < currentYear) {
                   itemsByVehicle[vehicleId].items.push({
-                      type: `Refrendo (${veh.refrendoAnioPagado} pagado)`,
-                      status: 'overdue', // Mark as overdue if not current year
-                      daysDiff: -365, // Arbitrary large negative number for sorting
+                      type: `Refrendo`,
+                      text: `Pendiente (${veh.refrendoAnioPagado} pagado)`, // Add descriptive text
+                      status: 'overdue',
+                      daysDiff: -365,
                       date: null,
                       isNear: true
                   });
@@ -2488,34 +2669,35 @@
         if (!foundItems) {
              htmlContent += "<p style='text-align: center; font-style: italic;'>No se encontraron vencimientos próximos o atrasados.</p>";
         } else {
-            htmlContent += "<table style='width:100%; border-collapse:collapse; margin-top: 15px;'><thead><tr style='background:#eee;'><th style='border:1px solid #ccc; padding:6px;'>Vehículo</th><th style='border:1px solid #ccc; padding:6px;'>Trámite/Servicio</th><th style='border:1px solid #ccc; padding:6px;'>Fecha Límite/Periodo</th><th style='border:1px solid #ccc; padding:6px;'>Estado</th></tr></thead><tbody>";
-            // Sort vehicles with items alphabetically for consistent report order
+            htmlContent += "<table style='width:100%; border-collapse:collapse; margin-top: 15px;'><thead><tr style='background:#eee;'><th style='border:1px solid #ccc; padding:6px;'>Vehículo</th><th style='border:1px solid #ccc; padding:6px;'>Trámite/Servicio</th><th style='border:1px solid #ccc; padding:6px;'>Fecha/Periodo Límite</th><th style='border:1px solid #ccc; padding:6px;'>Estado</th></tr></thead><tbody>";
+            // Sort vehicles with items alphabetically
              Object.keys(itemsByVehicle)
-                 .map(id => itemsByVehicle[id]) // Get vehicle objects
-                 .filter(vehInfo => vehInfo.items.length > 0) // Only those with items
-                 .sort((a, b) => a.name.localeCompare(b.name)) // Sort by name
+                 .map(id => itemsByVehicle[id])
+                 .filter(vehInfo => vehInfo.items.length > 0)
+                 .sort((a, b) => a.name.localeCompare(b.name))
                  .forEach(vehInfo => {
                      vehInfo.items.forEach((item, itemIndex) => {
                          let statusText = '';
                          let statusStyle = 'color: black;';
                          if (item.status === 'overdue') {
-                             statusText = `Atrasado${item.daysDiff ? ` (${Math.abs(item.daysDiff)} d)` : ''}`;
+                             statusText = `Atrasado${item.daysDiff !== null && item.daysDiff !== Infinity ? ` (${Math.abs(item.daysDiff)} d)` : ''}`;
                              statusStyle = 'color: red; font-weight: bold;';
                          } else if (item.status === 'due') {
-                              statusText = `Próximo${item.daysDiff !== null ? ` (en ${item.daysDiff} d)` : ''}`;
+                              statusText = `Próximo${item.daysDiff !== null && item.daysDiff !== Infinity ? ` (en ${item.daysDiff} d)` : ''}`;
                               statusStyle = 'color: orange; font-weight: bold;';
                          } else {
-                              statusText = item.status; // Should ideally not happen based on filter, but fallback
+                              statusText = item.status;
                          }
 
-                         // Add rowspan for vehicle name on first item
                          const vehicleCell = itemIndex === 0 ? `<td style="border:1px solid #ccc; padding:6px; vertical-align: top;" rowspan="${vehInfo.items.length}">${vehInfo.name}</td>` : '';
+                         // Use item.text if available (esp. for Verification/Refrendo), otherwise item.date
+                         const dateOrPeriod = item.text && (item.type.includes('Verif') || item.type.includes('Refrendo')) ? item.text : (item.date || 'N/A');
 
                          htmlContent += `
                             <tr>
                                 ${vehicleCell}
                                 <td style="border:1px solid #ccc; padding:6px;">${item.type}</td>
-                                <td style="border:1px solid #ccc; padding:6px;">${item.date || (item.text && item.type.startsWith('Verif')) ? item.text : 'N/A'}</td>
+                                <td style="border:1px solid #ccc; padding:6px;">${dateOrPeriod}</td>
                                 <td style="border:1px solid #ccc; padding:6px; ${statusStyle}">${statusText}</td>
                             </tr>
                          `;
@@ -2579,6 +2761,7 @@
       const fallasArray = Array.isArray(veh.fallas) ? veh.fallas : [];
       const mantosArray = Array.isArray(veh.mantenimientos) ? veh.mantenimientos : [];
       const additionalDocsArray = Array.isArray(veh.additionalDocuments) ? veh.additionalDocuments : [];
+      const verifInfo = getNextVerificationInfo(veh.placas, veh.lastVerificationDate); // Get verification status
 
       // --- Fallas ---
       let fallasHTML = "<h3><i class=\"fas fa-wrench\"></i> Fallas</h3><ul>";
@@ -2625,6 +2808,8 @@
             <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Vencimiento Seguro:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.vencimientoSeguro || 'N/A'}</td></tr>
             <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Aseguradora:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.aseguradora || 'N/A'} (${veh.telefono || 'N/A'})</td></tr>
             <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Último Refrendo:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.refrendoAnioPagado || 'N/P'}</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Verificación:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${verifInfo.text || 'N/A'} (${verifInfo.status})</td></tr>
+            <tr><td style="border:1px solid #ccc; padding: 5px;"><strong>Última Verificación Realizada:</strong></td><td style="border:1px solid #ccc; padding: 5px;">${veh.lastVerificationDate || 'N/A'}</td></tr>
           </table>
           <h3><i class="fas fa-info-circle"></i> Observaciones</h3>
           <p style="padding-left: 15px; font-style: italic;">${veh.observaciones ? veh.observaciones.replace(/\n/g, '<br>') : 'Ninguna'}</p>
@@ -2878,8 +3063,8 @@
     function handleImport() {
         const fileInput = document.getElementById('importFile');
         const resultDiv = document.getElementById('importResult');
-        if (!resultDiv) return; // Should not happen
-        resultDiv.innerHTML = ''; // Clear previous messages
+        if (!resultDiv) return;
+        resultDiv.innerHTML = '';
 
         if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
             resultDiv.innerHTML = '<span style="color: var(--danger-color);">Por favor, selecciona un archivo CSV.</span>';
@@ -2900,21 +3085,25 @@
             const errors = [];
 
             try {
-                const lines = text.split(/\r\n|\n|\r/); // Handle different line endings
+                const lines = text.split(/\r\n|\n|\r/);
                 if (lines.length <= 1) {
                      resultDiv.innerHTML = '<span style="color: var(--warning-color);">El archivo CSV está vacío o solo contiene encabezado.</span>';
                      return;
                 }
 
                 // Define expected header order (match documentation)
-                 const expectedHeaders = ["MarcaModelo", "Modelo", "Año", "Color", "Placas", "NumeroSerie", "FechaAdquisicion", "Kilometraje", "ProximoMantenimiento", "CambioPlacas", "VencimientoSeguro", "Aseguradora", "TelefonoSeguro", "RefrendoAnioPagado", "Observaciones"];
-                 const headerLine = lines[0].split(','); // Basic comma split for header check
-                 // Simple header validation (check count and maybe first/last header)
-                 if (headerLine.length < expectedHeaders.length) {
-                    errors.push(`Línea 1 (Encabezado): Número de columnas (${headerLine.length}) incorrecto, se esperaban ${expectedHeaders.length}.`);
+                 const expectedHeaders = ["MarcaModelo", "Modelo", "Año", "Color", "Placas", "NumeroSerie", "FechaAdquisicion", "Kilometraje", "ProximoMantenimiento", "CambioPlacas", "VencimientoSeguro", "Aseguradora", "TelefonoSeguro", "RefrendoAnioPagado", "Observaciones", "LastVerificationDate"];
+                 const headerLineRaw = lines[0].trim();
+                 const headerLine = headerLineRaw.split(','); // Basic comma split
+
+                 // Basic header validation
+                 if (headerLine.length < expectedHeaders.length -1) { // Allow missing LastVerificationDate
+                    errors.push(`Línea 1 (Encabezado): Número de columnas (${headerLine.length}) incorrecto, se esperaban al menos ${expectedHeaders.length -1}. Encabezado encontrado: "${headerLineRaw}"`);
                     errorCount++;
-                    // Optionally stop import if header is wrong
-                    // throw new Error("Invalid header row.");
+                    // Continue processing rows, but log the header error
+                 } else {
+                    // Optional: Check specific headers match
+                    if(headerLine[0].trim() !== expectedHeaders[0]) errors.push(`Línea 1 (Encabezado): Primera columna no es "${expectedHeaders[0]}".`);
                  }
 
 
@@ -2926,32 +3115,31 @@
                     // Basic CSV split - ASSUMES NO COMMAS WITHIN QUOTED FIELDS
                     const data = line.split(',');
 
-                    if (data.length !== expectedHeaders.length) {
-                        errors.push(`Línea ${i + 1}: Número de columnas (${data.length}) incorrecto, se esperaban ${expectedHeaders.length}.`);
+                    // Allow fewer columns if the missing ones are optional at the end (like LastVerificationDate)
+                    if (data.length < expectedHeaders.length - 1) { // Must have up to 'Observaciones'
+                        errors.push(`Línea ${i + 1}: Número de columnas (${data.length}) insuficiente, se esperaban al menos ${expectedHeaders.length - 1}.`);
                         errorCount++;
                         continue; // Skip this row
                     }
 
-                    // Basic validation and object creation
+                    // --- VALIDATION: Only MarcaModelo is truly required ---
                     const marcaModelo = data[0]?.trim();
                     if (!marcaModelo) {
                         errors.push(`Línea ${i + 1}: MarcaModelo (columna 1) es obligatorio.`);
                         errorCount++;
-                        continue;
+                        continue; // Skip this row
                     }
-                    // Placas no longer mandatory for saving, but retrieve it
-                    const placas = data[4]?.trim() || '';
 
                     try {
                         const newVehicle = {
-                            id: Date.now() + i, // Simple unique ID generation for batch
+                            id: Date.now() + i,
                             marcaModelo: marcaModelo,
                             modelo: data[1]?.trim() || '',
                             año: parseInt(data[2]?.trim()) || null,
                             color: data[3]?.trim() || '',
-                            placas: placas,
+                            placas: data[4]?.trim() || '', // Allow empty
                             numeroSerie: data[5]?.trim() || '',
-                            fechaAdquisicion: data[6]?.trim() || null, // Assumes YYYY-MM-DD or empty
+                            fechaAdquisicion: data[6]?.trim() || null,
                             kilometraje: data[7]?.trim() || '',
                             proximoMantenimiento: data[8]?.trim() || null,
                             cambioPlacas: data[9]?.trim() || null,
@@ -2960,17 +3148,20 @@
                             telefono: data[12]?.trim() || '',
                             refrendoAnioPagado: parseInt(data[13]?.trim()) || null,
                             observaciones: data[14]?.trim() || '',
-                            fallas: [], // Initialize empty arrays
+                            lastVerificationDate: data[15]?.trim() || null, // Get optional 16th column
+                            // Initialize empty arrays/docs
+                            fallas: [],
                             mantenimientos: [],
                             additionalDocuments: [],
-                            polizaBase64: "", // Initialize empty documents
+                            polizaBase64: "",
                             tarjetaCirculacionBase64: ""
                         };
-                         // Basic date format check (optional but good)
-                         if (newVehicle.fechaAdquisicion && !/^\d{4}-\d{2}-\d{2}$/.test(newVehicle.fechaAdquisicion)) newVehicle.fechaAdquisicion = null;
-                         if (newVehicle.proximoMantenimiento && !/^\d{4}-\d{2}-\d{2}$/.test(newVehicle.proximoMantenimiento)) newVehicle.proximoMantenimiento = null;
-                         if (newVehicle.cambioPlacas && !/^\d{4}-\d{2}-\d{2}$/.test(newVehicle.cambioPlacas)) newVehicle.cambioPlacas = null;
-                         if (newVehicle.vencimientoSeguro && !/^\d{4}-\d{2}-\d{2}$/.test(newVehicle.vencimientoSeguro)) newVehicle.vencimientoSeguro = null;
+                         // Basic date format check for provided dates
+                         if (newVehicle.fechaAdquisicion && !isValidDateString(newVehicle.fechaAdquisicion)){ errors.push(`Línea ${i+1}: Formato Fecha Adquisición inválido.`); newVehicle.fechaAdquisicion = null; }
+                         if (newVehicle.proximoMantenimiento && !isValidDateString(newVehicle.proximoMantenimiento)){ errors.push(`Línea ${i+1}: Formato Próx Manto inválido.`); newVehicle.proximoMantenimiento = null; }
+                         if (newVehicle.cambioPlacas && !isValidDateString(newVehicle.cambioPlacas)){ errors.push(`Línea ${i+1}: Formato Cambio Placas inválido.`); newVehicle.cambioPlacas = null; }
+                         if (newVehicle.vencimientoSeguro && !isValidDateString(newVehicle.vencimientoSeguro)){ errors.push(`Línea ${i+1}: Formato Vencimiento Seguro inválido.`); newVehicle.vencimientoSeguro = null; }
+                         if (newVehicle.lastVerificationDate && !isValidDateString(newVehicle.lastVerificationDate)){ errors.push(`Línea ${i+1}: Formato Última Verificación inválido.`); newVehicle.lastVerificationDate = null; }
 
                         vehicles.push(newVehicle);
                         addedCount++;
@@ -2986,15 +3177,15 @@
                 // Display results
                 let resultHTML = `<span style="color: var(--success-color);">Importación completada: ${addedCount} vehículos agregados.</span>`;
                 if (errorCount > 0) {
-                    resultHTML += `<br><span style="color: var(--danger-color);">${errorCount} filas con errores (ignoradas).</span>`;
+                    resultHTML += `<br><span style="color: var(--danger-color);">${errorCount} filas con errores (ignoradas o con datos corregidos).</span>`;
                     if (errors.length > 0) {
-                         resultHTML += `<br><small>Primeros errores:<br>${errors.slice(0, 5).join('<br>')}</small>`; // Show first few errors
-                         console.warn("Import errors:", errors);
+                         resultHTML += `<br><small>Primeros errores/advertencias:<br>${errors.slice(0, 5).join('<br>')}</small>`;
+                         console.warn("Import errors/warnings:", errors);
                     }
                 }
                 resultDiv.innerHTML = resultHTML;
                 if (addedCount > 0) showToast(`${addedCount} vehículos importados.`, "success", 5000);
-                if (errorCount > 0) showToast(`${errorCount} filas con errores durante importación.`, "warning", 5000);
+                if (errorCount > 0) showToast(`${errorCount} filas con errores/advertencias durante importación.`, "warning", 5000);
 
 
             } catch (error) {
@@ -3010,13 +3201,12 @@
             showToast("Error al leer el archivo.", "error");
         };
 
-        reader.readAsText(file); // Read the file as text
+        reader.readAsText(file, 'UTF-8'); // Specify UTF-8 encoding
     }
 
     // Function to escape CSV data (basic quoting)
     function escapeCsvValue(value) {
         const strValue = (value === null || value === undefined) ? "" : String(value);
-        // If value contains comma, newline, or double quote, enclose in double quotes and escape existing double quotes
         if (strValue.includes(',') || strValue.includes('\n') || strValue.includes('"')) {
             return `"${strValue.replace(/"/g, '""')}"`;
         }
@@ -3029,7 +3219,7 @@
             return;
         }
 
-        const headers = ["MarcaModelo", "Modelo", "Año", "Color", "Placas", "NumeroSerie", "FechaAdquisicion", "Kilometraje", "ProximoMantenimiento", "CambioPlacas", "VencimientoSeguro", "Aseguradora", "TelefonoSeguro", "RefrendoAnioPagado", "Observaciones"];
+        const headers = ["MarcaModelo", "Modelo", "Año", "Color", "Placas", "NumeroSerie", "FechaAdquisicion", "Kilometraje", "ProximoMantenimiento", "CambioPlacas", "VencimientoSeguro", "Aseguradora", "TelefonoSeguro", "RefrendoAnioPagado", "Observaciones", "LastVerificationDate"];
         let csvContent = headers.join(',') + '\r\n'; // Header row
 
         try {
@@ -3049,12 +3239,16 @@
                     escapeCsvValue(veh.aseguradora),
                     escapeCsvValue(veh.telefono),
                     escapeCsvValue(veh.refrendoAnioPagado),
-                    escapeCsvValue(veh.observaciones)
+                    escapeCsvValue(veh.observaciones),
+                    escapeCsvValue(veh.lastVerificationDate) // Export new field
                 ];
                 csvContent += row.join(',') + '\r\n';
             });
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+             // Add BOM for UTF-8 Excel compatibility
+            const BOM = "\uFEFF";
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
             const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -3086,7 +3280,7 @@
     }
 
     function initializeApp() {
-        console.log("Initializing LEFIOS CARS App v2...");
+        console.log("Initializing LEFIOS CARS App v3..."); // Version updated
         try {
             renderTable();
             const tableHead = document.querySelector('#vehicleTable thead');
